@@ -1,0 +1,150 @@
+:host {
+  --bg-main: #f2ede2;
+  --bg-panel: #fffaf0;
+  --ink: #1f2521;
+  --ink-soft: #465047;
+  --accent: #c25b24;
+  --accent-strong: #8f3f19;
+  --line: #decdb6;
+  display: block;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(194, 91, 36, 0.2), transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(132, 156, 114, 0.24), transparent 45%),
+    var(--bg-main);
+  color: var(--ink);
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+}
+
+.panel {
+  background: color-mix(in srgb, var(--bg-panel) 85%, white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.2rem;
+  box-shadow: 0 20px 40px -28px rgba(17, 20, 18, 0.5);
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: 0.03em;
+}
+
+.subtitle {
+  margin-top: 0.35rem;
+  color: var(--ink-soft);
+}
+
+.scrape-form {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+label {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.input-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+input {
+  flex: 1;
+  padding: 0.7rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  font-size: 1rem;
+  background: #fff;
+}
+
+button {
+  padding: 0.7rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid var(--accent-strong);
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.results {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  background: color-mix(in srgb, var(--bg-panel) 75%, white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.card h2 {
+  margin-top: 0;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+ul {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.25rem;
+  max-height: 220px;
+  overflow: auto;
+}
+
+a {
+  color: var(--accent-strong);
+}
+
+pre {
+  margin: 0;
+  border-radius: 8px;
+  background: #161915;
+  color: #edf8e8;
+  padding: 1rem;
+  overflow: auto;
+}
+
+.error {
+  margin: 0;
+  color: #ac2b2b;
+  font-weight: 600;
+}
+
+.api {
+  margin-top: 0.8rem;
+}
+
+@media (max-width: 850px) {
+  .results {
+    grid-template-columns: 1fr;
+  }
+
+  .input-row {
+    flex-direction: column;
+  }
+
+  button {
+    width: 100%;
+  }
+}

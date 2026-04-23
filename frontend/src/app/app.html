@@ -1,0 +1,70 @@
+<main class="page">
+  <section class="panel">
+    <h1>Web Scraper</h1>
+    <p class="subtitle">Paste URL. Get structured page data.</p>
+
+    <form [formGroup]="form" (ngSubmit)="scrape()" class="scrape-form">
+      <label for="url">Page URL</label>
+      <div class="input-row">
+        <input
+          id="url"
+          type="url"
+          formControlName="url"
+          placeholder="https://example.com"
+          autocomplete="off"
+        />
+        <button type="submit" [disabled]="loading()">
+          {{ loading() ? 'Scraping...' : 'Scrape' }}
+        </button>
+      </div>
+      @if (hasUrlError()) {
+        <p class="error">Use valid URL starting with http:// or https://</p>
+      }
+    </form>
+
+    @if (apiError()) {
+      <p class="error api">{{ apiError() }}</p>
+    }
+  </section>
+
+  @if (result(); as data) {
+    <section class="results">
+      <article class="card">
+        <h2>Overview</h2>
+        <p><strong>Status:</strong> {{ data.statusCode }}</p>
+        <p><strong>Requested:</strong> {{ data.requestedUrl }}</p>
+        <p><strong>Final:</strong> {{ data.finalUrl }}</p>
+        <p><strong>Title:</strong> {{ data.title || '(none)' }}</p>
+        <p><strong>Meta:</strong> {{ data.metaDescription || '(none)' }}</p>
+      </article>
+
+      <article class="card">
+        <h2>Headings</h2>
+        <p><strong>H1:</strong> {{ data.headings.h1.join(' | ') || '(none)' }}</p>
+        <p><strong>H2 count:</strong> {{ data.headings.h2.length }}</p>
+        <p><strong>H3 count:</strong> {{ data.headings.h3.length }}</p>
+      </article>
+
+      <article class="card">
+        <h2>Links (first {{ data.links.length }})</h2>
+        <ul>
+          @for (link of data.links; track link.href) {
+            <li>
+              <a [href]="link.href" target="_blank" rel="noopener">{{ link.text }}</a>
+            </li>
+          }
+        </ul>
+      </article>
+
+      <article class="card wide">
+        <h2>Text Preview</h2>
+        <p>{{ data.textPreview || '(none)' }}</p>
+      </article>
+
+      <article class="card wide">
+        <h2>Raw JSON</h2>
+        <pre>{{ prettyJson() }}</pre>
+      </article>
+    </section>
+  }
+</main>
