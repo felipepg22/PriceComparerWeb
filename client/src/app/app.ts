@@ -56,7 +56,7 @@ export class App {
 
     const body = { url: this.form.controls.url.value.trim() };
 
-    this.http.post<ScrapeResponse>('https://localhost:7168/api/scrape', body)
+    this.http.post<ScrapeResponse>('http://localhost:5235/api/scrape', body)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (response) => {

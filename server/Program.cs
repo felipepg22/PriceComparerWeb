@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("frontend", policy =>
+    options.AddPolicy("client", policy =>
     {
         policy.WithOrigins("http://localhost:4200")
             .AllowAnyHeader()
@@ -27,7 +27,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseCors("frontend");
+app.UseCors("client");
 app.UseHttpsRedirection();
 
 app.MapPost("/api/scrape", async (ScrapeRequest request, IHttpClientFactory httpClientFactory, CancellationToken cancellationToken) =>
