@@ -1,43 +1,52 @@
 # PriceComparerWeb
 
-Monorepo with:
-- `backend/`: ASP.NET Core Web API (.NET 10)
-- `frontend/`: Angular 21 standalone app
+PriceComparerWeb is a web app to compare prices for any kind of product across online stores.
 
-## First feature
+## Stack
 
-Screen to scrape one URL and show structured JSON data.
+- `server/`: ASP.NET Core Web API (.NET 10)
+- `client/`: Angular 21 standalone app
 
-Backend endpoint:
+## Product vision
+
+- The user types a product name.
+- The app searches the web for matching offers.
+- Matching can use product model, SKU, and/or product name.
+- Supported currencies: BRL (Brazilian Real), USD (US Dollar), and EUR (Euro).
+- No website is explicitly excluded as a data source.
+
+## Offer data shown
+
+- price
+- seller
+- product URL
+
+## Current base feature
+
+The first implemented backend capability is generic page scraping through:
+
 - `POST /api/scrape`
 - body: `{ "url": "https://example.com" }`
 
-Returns:
-- final URL
-- status code
-- title
-- meta description
-- headings (h1/h2/h3)
-- links
-- text preview
+It returns structured page metadata such as final URL, status code, title, headings, links, and text preview.
 
-## Run backend
+## Run server
 
 ```bash
-dotnet run --project backend/PriceComparerWeb.Api.csproj
+dotnet run --project server/PriceComparerWeb.Api.csproj
 ```
 
-Default HTTPS URL usually: `https://localhost:7168`
+Default HTTPS URL is usually `https://localhost:7168`.
 
-## Run frontend
+## Run client
 
 Angular 21 needs Node >= 20.19.
 
-If local Node is older, run with temporary Node:
+From `client/`:
 
 ```bash
-cd frontend
-npx -y node@20.19.0 ./node_modules/@angular/cli/bin/ng serve
+npm install
+npm start
 ```
 
-Open: `http://localhost:4200`
+Open `http://localhost:4200`.
