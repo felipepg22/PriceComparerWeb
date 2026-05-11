@@ -1,20 +1,45 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  PriceComparerWeb compares product prices across online stores.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  Tech stack:
+  - server/: ASP.NET Core Web API targeting .NET 10.
+  - client/: Angular 21 standalone app.
+  - Product search uses self-hosted SearXNG at http://localhost:8080 with JSON output enabled.
+
+  Project structure:
+  - server/Models/: request/response records.
+  - server/Options/: configuration types.
+  - server/Services/: scraping, search, extraction, and orchestration logic.
+  - client/src/app/: main Angular component, template, styles, and specs.
+  - openspec/changes/: OpenSpec change artifacts.
+
+  Commands:
+  - dotnet build server/PriceComparerWeb.Api.csproj
+  - dotnet run --project server/PriceComparerWeb.Api.csproj
+  - cd client && npm start
+  - cd client && npm run build
+  - cd client && npm run test -- --watch=false
+
+  Conventions:
+  - Use Conventional Commits in English.
+  - Use 4-space indentation for C#; 2-space indentation for TypeScript, HTML, and CSS.
+  - Keep API DTOs as C# records.
+  - Keep Angular state signal-based and components standalone.
+  - Do not commit credentials or private endpoints.
+  - Do not bypass paywalls, authentication, anti-bot controls, or site terms when scraping.
+
+rules:
+  proposal:
+    - Keep the proposal concise and focused on user value, API impact, and affected capabilities.
+    - Include SearXNG or scraping constraints when discovery behavior changes.
+  design:
+    - Separate API contracts, provider/search behavior, scraping/extraction behavior, and UI impact.
+    - Call out cancellation, timeouts, partial failures, and unsupported currencies for product-search changes.
+  specs:
+    - Use SHALL/MUST language and include at least one scenario per requirement.
+    - Keep scenarios testable through API, UI, or manual verification.
+  tasks:
+    - Use checkbox tasks only.
+    - Include build/test/manual verification tasks that match the current repo test coverage.
