@@ -38,6 +38,22 @@ dotnet run --project server/PriceComparerWeb.Api.csproj
 
 Default HTTPS URL is usually `https://localhost:7168`.
 
+## Search provider
+
+Product search uses a self-hosted SearXNG instance. Development config expects:
+
+```text
+http://localhost:8080
+```
+
+SearXNG must allow JSON output. Verify this returns JSON before using product search:
+
+```bash
+curl "http://localhost:8080/search?q=test&format=json"
+```
+
+If SearXNG returns `403`, enable the `json` format in its `settings.yml`.
+
 ## Run client
 
 Angular 21 needs Node >= 20.19.

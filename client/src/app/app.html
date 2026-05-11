@@ -1,24 +1,32 @@
 <main class="page">
   <section class="panel">
-    <h1>Web Scraper</h1>
-    <p class="subtitle">Paste URL. Get structured page data.</p>
+    <h1>Price Comparer</h1>
+    <p class="subtitle">Search product. Compare found offers from configured sources.</p>
 
-    <form [formGroup]="form" (ngSubmit)="scrape()" class="scrape-form">
-      <label for="url">Page URL</label>
+    <form [formGroup]="form" (ngSubmit)="search()" class="search-form">
+      <label for="query">Product</label>
       <div class="input-row">
         <input
-          id="url"
-          type="url"
-          formControlName="url"
-          placeholder="https://example.com"
+          id="query"
+          type="search"
+          formControlName="query"
+          placeholder="iPhone 15 128GB"
           autocomplete="off"
         />
+
+        <select formControlName="currency" aria-label="Currency">
+          <option value="">Any currency</option>
+          <option value="BRL">BRL</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+        </select>
+
         <button type="submit" [disabled]="loading()">
-          {{ loading() ? 'Scraping...' : 'Scrape' }}
+          {{ loading() ? 'Searching...' : 'Search' }}
         </button>
       </div>
-      @if (hasUrlError()) {
-        <p class="error">Use valid URL starting with http:// or https://</p>
+      @if (hasQueryError()) {
+        <p class="error">Enter at least 2 characters.</p>
       }
     </form>
 
@@ -28,43 +36,65 @@
   </section>
 
   @if (result(); as data) {
-    <section class="results">
-      <article class="card">
-        <h2>Overview</h2>
-        <p><strong>Status:</strong> {{ data.statusCode }}</p>
-        <p><strong>Requested:</strong> {{ data.requestedUrl }}</p>
-        <p><strong>Final:</strong> {{ data.finalUrl }}</p>
-        <p><strong>Title:</strong> {{ data.title || '(none)' }}</p>
-        <p><strong>Meta:</strong> {{ data.metaDescription || '(none)' }}</p>
-      </article>
+    <section class="summary">
+      <div>
+        <strong>{{ data.offers.length }}</strong>
+        <span>found offers</span>
+      </div>
+      <div>
+        <strong>{{ data.candidateCount }}</strong>
+        <span>candidate pages</span>
+      </div>
+      <div>
+        <strong>{{ data.attemptedSourceCount }}</strong>
+        <span>attempted sources</span>
+      </div>
+    </section>
 
-      <article class="card">
-        <h2>Headings</h2>
-        <p><strong>H1:</strong> {{ data.headings.h1.join(' | ') || '(none)' }}</p>
-        <p><strong>H2 count:</strong> {{ data.headings.h2.length }}</p>
-        <p><strong>H3 count:</strong> {{ data.headings.h3.length }}</p>
-      </article>
+    @if (failedSources().length > 0) {
+      <section class="notice">
+        Some sources could not be compared. Successful found offers remain visible.
+      </section>
+    }
 
-      <article class="card">
-        <h2>Links (first {{ data.links.length }})</h2>
+    @if (data.offers.length > 0) {
+      <section class="results" aria-label="Found offers">
+        @for (offer of data.offers; track offer.url) {
+          <article class="offer">
+            <div>
+              <p class="seller">{{ offer.seller || offer.sourceName }}</p>
+              <h2>{{ offer.title }}</h2>
+              <p class="meta">{{ offer.sourceName }} · {{ offer.extractionMethod }} · {{ offer.confidence | percent }}</p>
+            </div>
+            <div class="price-block">
+              <p class="price">{{ formatPrice(offer) }}</p>
+              <a [href]="offer.url" target="_blank" rel="noopener">Open offer</a>
+            </div>
+          </article>
+        }
+      </section>
+    } @else {
+      <section class="empty">
+        No comparable BRL, USD, or EUR offers found for this search.
+      </section>
+    }
+
+    @if (failedSources().length > 0) {
+      <section class="failures">
+        <h2>Sources not compared</h2>
         <ul>
-          @for (link of data.links; track link.href) {
+          @for (source of failedSources(); track source.url) {
             <li>
-              <a [href]="link.href" target="_blank" rel="noopener">{{ link.text }}</a>
+              <span>{{ source.sourceName }}</span>
+              <small>{{ source.reason || source.status }}</small>
             </li>
           }
         </ul>
-      </article>
-
-      <article class="card wide">
-        <h2>Text Preview</h2>
-        <p>{{ data.textPreview || '(none)' }}</p>
-      </article>
-
-      <article class="card wide">
-        <h2>Raw JSON</h2>
-        <pre>{{ prettyJson() }}</pre>
-      </article>
+      </section>
+    }
+  } @else if (hasSearched() && !loading() && !apiError()) {
+    <section class="empty">
+      No comparable offers found.
     </section>
   }
 </main>
