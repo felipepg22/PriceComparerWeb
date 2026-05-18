@@ -1,0 +1,88 @@
+:host {
+  display: block;
+}
+
+.search-panel {
+  padding: var(--wise-space-xl, 1.5rem);
+  border-radius: var(--wise-radius-card, 24px);
+  background: var(--wise-canvas, #ffffff);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(8rem, 10rem);
+  gap: var(--wise-space-md, 0.75rem);
+  align-items: end;
+  min-width: 0;
+}
+
+.search-panel__field {
+  display: grid;
+  gap: var(--wise-space-sm, 0.5rem);
+  min-width: 0;
+}
+
+label {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 700;
+  color: var(--wise-body, #454745);
+}
+
+input,
+select,
+button {
+  min-width: 0;
+  min-height: 48px;
+  border-radius: var(--wise-radius-control, 24px);
+  border: 1px solid var(--wise-ink, #0e0f0c);
+  background: var(--wise-canvas, #ffffff);
+  color: var(--wise-ink, #0e0f0c);
+  padding: var(--wise-space-md, 0.75rem) var(--wise-space-lg, 1rem);
+  line-height: 1.5rem;
+}
+
+input::placeholder {
+  color: var(--wise-muted, #868685);
+  opacity: 1;
+}
+
+button {
+  background: var(--wise-primary, #9fe870);
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 140ms ease, transform 140ms ease;
+  grid-column: 1 / -1;
+}
+
+button:hover:not(:disabled) {
+  background: var(--wise-primary-active, #cdffad);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  opacity: 0.75;
+  cursor: wait;
+}
+
+input:focus-visible,
+select:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: none;
+  box-shadow: var(--wise-focus, 0 0 0 3px #9fe870);
+}
+
+@media (max-width: 767px) {
+  .search-panel {
+    padding: 0;
+    grid-template-columns: 1fr;
+    background: transparent;
+  }
+
+  button {
+    width: 100%;
+    grid-column: auto;
+  }
+}

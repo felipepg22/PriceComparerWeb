@@ -1,43 +1,32 @@
-import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
-
-interface ProductSearchResponse {
-  query: string;
-  currency: string | null;
-  fetchedAtUtc: string;
-  candidateCount: number;
-  attemptedSourceCount: number;
-  offers: ProductOffer[];
-  attemptedSources: AttemptedSource[];
-  warnings: string[];
-}
-
-interface ProductOffer {
-  title: string;
-  priceAmount: number;
-  currency: 'BRL' | 'USD' | 'EUR';
-  seller: string;
-  url: string;
-  sourceName: string;
-  extractionMethod: string;
-  confidence: number;
-  fetchedAtUtc: string;
-}
-
-interface AttemptedSource {
-  url: string;
-  sourceName: string;
-  status: 'success' | 'failed' | 'excluded';
-  reason: string | null;
-  statusCode: number | null;
-}
+import { MetricsSummaryComponent } from './components/metrics-summary.component';
+import { OfferCardComponent } from './components/offer-card.component';
+import { SearchPanelComponent } from './components/search-panel.component';
+import { StateMessageComponent } from './components/state-message.component';
+import {
+  DashboardOffer,
+  DashboardConfidenceLabel,
+  getConfidenceLabel,
+  getConfidencePercent,
+  getSellerLabel,
+  ProductOffer,
+  ProductSearchResponse,
+  formatPriceAmount
+} from './models/product-search';
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, ReactiveFormsModule],
+  standalone: true,
+  imports: [
+    ReactiveFormsModule,
+    SearchPanelComponent,
+    MetricsSummaryComponent,
+    OfferCardComponent,
+    StateMessageComponent
+  ],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -47,8 +36,7 @@ export class App {
   protected readonly apiError = signal<string | null>(null);
   protected readonly result = signal<ProductSearchResponse | null>(null);
   protected readonly hasSearched = signal(false);
-  protected readonly failedSources = computed(() =>
-    this.result()?.attemptedSources.filter(source => source.status !== 'success') ?? []);
+  protected readonly dashboardOffers = computed(() => this.result()?.offers.map(offer => this.dashboardOffer(offer)) ?? []);
 
   protected readonly form = new FormGroup({
     query: new FormControl('', {
@@ -91,10 +79,32 @@ export class App {
     return control.touched && control.invalid;
   }
 
-  protected formatPrice(offer: ProductOffer): string | null {
-    return new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: offer.currency
-    }).format(offer.priceAmount);
+  protected formatPrice(offer: ProductOffer): string {
+    return formatPriceAmount(offer.priceAmount, offer.currency);
+  }
+
+  protected sellerLabel(offer: ProductOffer): string {
+    return getSellerLabel(offer);
+  }
+
+  protected confidencePercent(offer: ProductOffer): string {
+    return getConfidencePercent(offer.confidence);
+  }
+
+  protected confidenceLabel(offer: ProductOffer): DashboardConfidenceLabel {
+    return getConfidenceLabel(offer.confidence);
+  }
+
+  protected dashboardOffer(offer: ProductOffer): DashboardOffer {
+    return {
+      title: offer.title,
+      formattedPrice: this.formatPrice(offer),
+      sellerLabel: this.sellerLabel(offer),
+      sourceName: offer.sourceName,
+      extractionMethod: offer.extractionMethod,
+      confidencePercent: this.confidencePercent(offer),
+      confidenceLabel: this.confidenceLabel(offer),
+      url: offer.url
+    };
   }
 }

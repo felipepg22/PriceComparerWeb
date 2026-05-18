@@ -1,0 +1,16 @@
+<article class="offer-card">
+  <div class="offer-card__main">
+    <p class="offer-card__seller">{{ offer.sellerLabel }}</p>
+    <h2>{{ offer.title }}</h2>
+    <p class="offer-card__meta">
+      <span>{{ offer.sourceName }}</span>
+      <span>{{ offer.extractionMethod }}</span>
+    </p>
+  </div>
+
+  <div class="offer-card__side">
+    <p class="offer-card__price">{{ offer.formattedPrice }}</p>
+    <p class="offer-card__confidence">{{ offer.confidencePercent }} · {{ offer.confidenceLabel }}</p>
+    <a [href]="offer.url" target="_blank" rel="noopener">Open offer</a>
+  </div>
+</article>

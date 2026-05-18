@@ -1,100 +1,43 @@
 <main class="page">
-  <section class="panel">
-    <h1>Price Comparer</h1>
-    <p class="subtitle">Search product. Compare found offers from configured sources.</p>
+  <section class="dashboard-hero">
+    <div class="hero-copy">
+      <p class="eyebrow">Product comparison dashboard</p>
+      <h1>Price Comparer</h1>
+      <p class="subtitle">Search trusted offers across configured sources and compare what comes back in one place.</p>
+    </div>
 
-    <form [formGroup]="form" (ngSubmit)="search()" class="search-form">
-      <label for="query">Product</label>
-      <div class="input-row">
-        <input
-          id="query"
-          type="search"
-          formControlName="query"
-          placeholder="iPhone 15 128GB"
-          autocomplete="off"
-        />
-
-        <select formControlName="currency" aria-label="Currency">
-          <option value="">Any currency</option>
-          <option value="BRL">BRL</option>
-          <option value="USD">USD</option>
-          <option value="EUR">EUR</option>
-        </select>
-
-        <button type="submit" [disabled]="loading()">
-          {{ loading() ? 'Searching...' : 'Search' }}
-        </button>
-      </div>
-      @if (hasQueryError()) {
-        <p class="error">Enter at least 2 characters.</p>
-      }
-    </form>
-
-    @if (apiError()) {
-      <p class="error api">{{ apiError() }}</p>
-    }
+    <app-search-panel [form]="form" [loading]="loading()" (submitted)="search()"></app-search-panel>
   </section>
 
+  @if (loading()) {
+    <app-state-message kind="loading"></app-state-message>
+  }
+
+  @if (hasQueryError()) {
+    <app-state-message kind="validation"></app-state-message>
+  }
+
+  @if (apiError()) {
+    <app-state-message kind="error" [message]="apiError() || ''"></app-state-message>
+  }
+
   @if (result(); as data) {
-    <section class="summary">
-      <div>
-        <strong>{{ data.offers.length }}</strong>
-        <span>found offers</span>
-      </div>
-      <div>
-        <strong>{{ data.candidateCount }}</strong>
-        <span>candidate pages</span>
-      </div>
-      <div>
-        <strong>{{ data.attemptedSourceCount }}</strong>
-        <span>attempted sources</span>
-      </div>
-    </section>
+    <app-metrics-summary
+      [foundOffers]="data.offers.length"
+      [candidatePages]="data.candidateCount"
+      [attemptedSources]="data.attemptedSourceCount"
+    ></app-metrics-summary>
 
-    @if (failedSources().length > 0) {
-      <section class="notice">
-        Some sources could not be compared. Successful found offers remain visible.
-      </section>
-    }
-
-    @if (data.offers.length > 0) {
+    @if (dashboardOffers().length > 0) {
       <section class="results" aria-label="Found offers">
-        @for (offer of data.offers; track offer.url) {
-          <article class="offer">
-            <div>
-              <p class="seller">{{ offer.seller || offer.sourceName }}</p>
-              <h2>{{ offer.title }}</h2>
-              <p class="meta">{{ offer.sourceName }} · {{ offer.extractionMethod }} · {{ offer.confidence | percent }}</p>
-            </div>
-            <div class="price-block">
-              <p class="price">{{ formatPrice(offer) }}</p>
-              <a [href]="offer.url" target="_blank" rel="noopener">Open offer</a>
-            </div>
-          </article>
+        @for (offer of dashboardOffers(); track offer.url) {
+          <app-offer-card [offer]="offer"></app-offer-card>
         }
       </section>
-    } @else {
-      <section class="empty">
-        No comparable BRL, USD, or EUR offers found for this search.
-      </section>
-    }
-
-    @if (failedSources().length > 0) {
-      <section class="failures">
-        <h2>Sources not compared</h2>
-        <ul>
-          @for (source of failedSources(); track source.url) {
-            <li>
-              <span>{{ source.sourceName }}</span>
-              <small>{{ source.reason || source.status }}</small>
-            </li>
-          }
-        </ul>
-      </section>
+    } @else if (hasSearched() && !loading() && !apiError()) {
+      <app-state-message kind="empty"></app-state-message>
     }
   } @else if (hasSearched() && !loading() && !apiError()) {
-    <section class="empty">
-      No comparable offers found.
-    </section>
+    <app-state-message kind="empty"></app-state-message>
   }
 </main>

@@ -1,222 +1,146 @@
 :host {
-  --bg-main: #f7f7f4;
-  --bg-panel: #ffffff;
-  --ink: #1e2420;
-  --ink-soft: #59635d;
-  --accent: #1f7a5a;
-  --accent-strong: #165c43;
-  --line: #d8ded8;
-  --warn: #9b4f12;
+  --wise-primary: #9fe870;
+  --wise-primary-active: #cdffad;
+  --wise-primary-pale: #e2f6d5;
+  --wise-ink: #0e0f0c;
+  --wise-ink-deep: #163300;
+  --wise-body: #454745;
+  --wise-muted: #868685;
+  --wise-canvas: #ffffff;
+  --wise-canvas-soft: #e8ebe6;
+  --wise-line: #cbd3c7;
+  --wise-negative: #d03238;
+  --wise-negative-bg: #fff2f1;
+  --wise-warning: #ffd11a;
+  --wise-warning-content: #4a3b1c;
+  --wise-radius-card: 24px;
+  --wise-radius-control: 24px;
+  --wise-radius-small: 12px;
+  --wise-space-xs: 0.25rem;
+  --wise-space-sm: 0.5rem;
+  --wise-space-md: 0.75rem;
+  --wise-space-lg: 1rem;
+  --wise-space-xl: 1.5rem;
+  --wise-space-2xl: 2rem;
+  --wise-space-3xl: 3rem;
+  --wise-focus: 0 0 0 3px rgba(159, 232, 112, 0.95), 0 0 0 5px rgba(14, 15, 12, 0.85);
+  --wise-shadow-soft: 0 22px 60px -46px rgba(14, 15, 12, 0.55);
   display: block;
   min-height: 100vh;
-  background: var(--bg-main);
-  color: var(--ink);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 360px),
+    var(--wise-canvas-soft);
+  color: var(--wise-ink);
 }
 
 .page {
-  max-width: 1120px;
+  width: min(100%, 1180px);
   margin: 0 auto;
-  padding: 2rem 1rem 3rem;
+  padding: clamp(1rem, 3vw, var(--wise-space-3xl)) clamp(0.75rem, 3vw, var(--wise-space-xl)) var(--wise-space-3xl);
+  display: grid;
+  gap: var(--wise-space-lg);
+  overflow-x: clip;
 }
 
-.panel,
-.summary,
-.notice,
-.empty,
-.failures {
-  background: var(--bg-panel);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+.dashboard-hero,
+app-state-message {
+  display: block;
+  background: var(--wise-canvas);
+  border-radius: var(--wise-radius-card);
+  box-shadow: var(--wise-shadow-soft);
 }
 
-.panel {
-  padding: 1.25rem;
-  box-shadow: 0 16px 38px -32px rgba(20, 30, 24, 0.65);
+.dashboard-hero {
+  padding: clamp(1rem, 3vw, var(--wise-space-2xl));
+  display: grid;
+  gap: var(--wise-space-xl);
+}
+
+.hero-copy {
+  display: grid;
+  gap: var(--wise-space-sm);
+  min-width: 0;
+  align-content: center;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--wise-body);
 }
 
 h1 {
   margin: 0;
-  font-size: 2.25rem;
+  max-width: 9ch;
+  font-family: 'Manrope', 'Inter', system-ui, sans-serif;
+  font-size: clamp(3rem, 10vw, 6.5rem);
+  font-weight: 900;
+  line-height: 0.9;
   letter-spacing: 0;
+  overflow-wrap: anywhere;
 }
 
 .subtitle {
-  margin: 0.35rem 0 0;
-  color: var(--ink-soft);
+  margin: 0;
+  max-width: 60ch;
+  color: var(--wise-body);
+  font-size: clamp(1rem, 1.6vw, 1.18rem);
+  line-height: 1.5;
 }
 
-.search-form {
-  margin-top: 1rem;
-  display: grid;
-  gap: 0.5rem;
+app-state-message {
+  padding: var(--wise-space-xl);
 }
 
-label {
-  font-size: 0.85rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.input-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 150px auto;
-  gap: 0.75rem;
-}
-
-input,
-select {
-  min-width: 0;
-  padding: 0.7rem 0.85rem;
-  border-radius: 8px;
-  border: 1px solid var(--line);
-  font-size: 1rem;
-  background: #fff;
-}
-
-button {
-  padding: 0.7rem 1.1rem;
-  border-radius: 8px;
-  border: 1px solid var(--accent-strong);
-  background: var(--accent);
-  color: #fff;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: 0.7;
-  cursor: wait;
-}
-
-.summary {
-  margin-top: 1rem;
-  padding: 1rem;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-}
-
-.summary div {
-  display: grid;
-  gap: 0.2rem;
-}
-
-.summary strong {
-  font-size: 1.6rem;
-}
-
-.summary span,
-.meta,
-.seller,
-small {
-  color: var(--ink-soft);
-}
-
-.notice,
-.empty {
-  margin-top: 1rem;
-  padding: 1rem;
-}
-
-.notice {
-  border-color: #e7c28b;
-  color: var(--warn);
+app-search-panel,
+app-metrics-summary {
+  display: block;
+  box-shadow: none;
 }
 
 .results {
-  margin-top: 1rem;
   display: grid;
-  gap: 0.75rem;
+  gap: var(--wise-space-md);
+  min-width: 0;
 }
 
-.offer {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 1rem;
-  align-items: center;
-  padding: 1rem;
-  background: var(--bg-panel);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+app-offer-card {
+  display: block;
+  min-width: 0;
+  background: var(--wise-canvas);
+  border-radius: var(--wise-radius-card);
+  box-shadow: var(--wise-shadow-soft);
+  padding: var(--wise-space-xl);
 }
 
-.offer h2 {
-  margin: 0.25rem 0;
-  font-size: 1.05rem;
-  letter-spacing: 0;
+@media (min-width: 768px) {
+  .page {
+    gap: var(--wise-space-xl);
+  }
 }
 
-.seller,
-.meta {
-  margin: 0;
+@media (min-width: 1024px) {
+  .dashboard-hero {
+    grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.9fr);
+    align-items: start;
+  }
 }
 
-.price-block {
-  display: grid;
-  justify-items: end;
-  gap: 0.35rem;
-}
-
-.price {
-  margin: 0;
-  font-size: 1.35rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-a {
-  color: var(--accent-strong);
-  font-weight: 700;
-}
-
-.failures {
-  margin-top: 1rem;
-  padding: 1rem;
-}
-
-.failures h2 {
-  margin: 0 0 0.75rem;
-  font-size: 1rem;
-}
-
-ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 0.5rem;
-}
-
-li {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--line);
-}
-
-.error {
-  margin: 0;
-  color: #ac2b2b;
-  font-weight: 600;
-}
-
-.api {
-  margin-top: 0.8rem;
-}
-
-@media (max-width: 760px) {
-  .input-row,
-  .summary,
-  .offer {
-    grid-template-columns: 1fr;
+@media (max-width: 767px) {
+  app-state-message,
+  app-offer-card {
+    padding: var(--wise-space-lg);
   }
 
-  button {
-    width: 100%;
+  .dashboard-hero {
+    padding: var(--wise-space-lg);
   }
 
-  .price-block {
-    justify-items: start;
+  h1 {
+    font-size: clamp(2.7rem, 14vw, 4.25rem);
   }
 }
