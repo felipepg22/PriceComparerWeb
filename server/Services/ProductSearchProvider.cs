@@ -14,30 +14,96 @@ public sealed class SearXngProductSearchProvider(
     IOptions<ProductSearchOptions> options,
     IHttpClientFactory httpClientFactory) : IProductSearchProvider
 {
+    private static readonly string[] ShoppingIntentQuerySuffixes =
+    [
+        "",
+        "comprar",
+        "preco",
+        "loja oficial comprar",
+        "shop buy price"
+    ];
+
+    private static readonly string[] OfferIntentTerms =
+    [
+        "buy",
+        "comprar",
+        "deal",
+        "deals",
+        "loja",
+        "offer",
+        "oferta",
+        "price",
+        "preco",
+        "precos",
+        "shop",
+        "store"
+    ];
+
+    private static readonly string[] OfferUrlHints =
+    [
+        "/buy-",
+        "/dp/",
+        "/p/",
+        "/produto",
+        "/product",
+        "/shop/",
+        "/smartphones/"
+    ];
+
+    private static readonly string[] InformationalHosts =
+    [
+        "wikipedia.org",
+        "reddit.com",
+        "youtube.com"
+    ];
+
     public async Task<IReadOnlyList<ProductSearchCandidate>> FindCandidatesAsync(string query, CancellationToken cancellationToken)
     {
         var searchOptions = options.Value;
         var baseUri = ParseSearXngBaseUri(searchOptions);
-        var searchUri = BuildSearchUri(baseUri, query);
         var client = httpClientFactory.CreateClient("searxng");
+        var scoredCandidates = new Dictionary<string, ScoredCandidate>(StringComparer.OrdinalIgnoreCase);
 
-        using var response = await client.GetAsync(searchUri, cancellationToken);
-        if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        foreach (var expandedQuery in ExpandSearchQueries(query))
         {
-            throw new InvalidOperationException("SearXNG JSON API returned 403. Enable the json format in SearXNG settings.yml.");
+            var searchUri = BuildSearchUri(baseUri, expandedQuery);
+            using var response = await client.GetAsync(searchUri, cancellationToken);
+            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                throw new InvalidOperationException("SearXNG JSON API returned 403. Enable the json format in SearXNG settings.yml.");
+            }
+
+            response.EnsureSuccessStatusCode();
+
+            var searchResponse = await response.Content.ReadFromJsonAsync<SearXngSearchResponse>(cancellationToken);
+            var tokens = TextHelpers.QueryTokens(query);
+            foreach (var (result, index) in (searchResponse?.Results ?? []).Select((result, index) => (result, index)))
+            {
+                var scoredCandidate = ToScoredCandidate(result, tokens, index);
+                if (scoredCandidate is null)
+                {
+                    continue;
+                }
+
+                var normalizedUrl = NormalizeUrl(scoredCandidate.Candidate.Url);
+                if (scoredCandidates.TryGetValue(normalizedUrl, out var existing))
+                {
+                    scoredCandidates[normalizedUrl] = existing with
+                    {
+                        Score = existing.Score + scoredCandidate.Score,
+                        BestRank = Math.Min(existing.BestRank, scoredCandidate.BestRank)
+                    };
+                    continue;
+                }
+
+                scoredCandidates.Add(normalizedUrl, scoredCandidate);
+            }
         }
 
-        response.EnsureSuccessStatusCode();
-
-        var searchResponse = await response.Content.ReadFromJsonAsync<SearXngSearchResponse>(cancellationToken);
-        var tokens = TextHelpers.QueryTokens(query);
-
-        return (searchResponse?.Results ?? [])
-            .Select(result => ToScoredCandidate(result, tokens))
-            .OfType<ScoredCandidate>()
+        return scoredCandidates.Values
             .OrderByDescending(candidate => candidate.Score)
+            .ThenBy(candidate => candidate.BestRank)
             .ThenBy(candidate => candidate.Candidate.SourceName)
-            .DistinctBy(candidate => NormalizeUrl(candidate.Candidate.Url))
             .Select(candidate => candidate.Candidate)
             .Take(Math.Clamp(searchOptions.MaxCandidates, 1, 5))
             .ToArray();
@@ -72,6 +138,15 @@ public sealed class SearXngProductSearchProvider(
         return new Uri(options.SearXngBaseUrl!, UriKind.Absolute);
     }
 
+    private static IEnumerable<string> ExpandSearchQueries(string query)
+    {
+        var trimmedQuery = query.Trim();
+
+        return ShoppingIntentQuerySuffixes
+            .Select(suffix => string.IsNullOrWhiteSpace(suffix) ? trimmedQuery : $"{trimmedQuery} {suffix}")
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+    }
+
     private static Uri BuildSearchUri(Uri baseUri, string query)
     {
         var builder = new UriBuilder(new Uri(baseUri, "search"));
@@ -79,7 +154,7 @@ public sealed class SearXngProductSearchProvider(
         return builder.Uri;
     }
 
-    private static ScoredCandidate? ToScoredCandidate(SearXngResult result, IReadOnlyList<string> tokens)
+    private static ScoredCandidate? ToScoredCandidate(SearXngResult result, IReadOnlyList<string> tokens, int rank)
     {
         if (!Uri.TryCreate(result.Url, UriKind.Absolute, out var uri) ||
             (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
@@ -90,13 +165,35 @@ public sealed class SearXngProductSearchProvider(
         var score = ScoreCandidate(result.Title, result.Content, result.Url, tokens);
         return score <= 0
             ? null
-            : new ScoredCandidate(new ProductSearchCandidate(result.Url, "SearXNG", TextHelpers.NullIfBlank(result.Title)), score);
+            : new ScoredCandidate(new ProductSearchCandidate(result.Url, "SearXNG", TextHelpers.NullIfBlank(result.Title)), score, rank);
     }
 
     private static int ScoreCandidate(string? title, string? content, string url, IReadOnlyList<string> tokens)
     {
         var haystack = TextHelpers.NormalizeForSearch($"{title} {content} {Uri.UnescapeDataString(url)}");
-        return tokens.Count(token => haystack.Contains(token, StringComparison.OrdinalIgnoreCase));
+        var tokenScore = tokens.Count(token => haystack.Contains(token, StringComparison.OrdinalIgnoreCase)) * 10;
+        if (tokenScore == 0)
+        {
+            return 0;
+        }
+
+        var offerIntentScore = OfferIntentTerms.Count(term => haystack.Contains(term, StringComparison.OrdinalIgnoreCase)) * 4;
+        var offerUrlScore = OfferUrlHints.Count(hint => url.Contains(hint, StringComparison.OrdinalIgnoreCase)) * 8;
+        var hostPenalty = IsInformationalHost(url) ? 20 : 0;
+
+        return tokenScore + offerIntentScore + offerUrlScore - hostPenalty;
+    }
+
+    private static bool IsInformationalHost(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        return InformationalHosts.Any(host =>
+            uri.Host.Equals(host, StringComparison.OrdinalIgnoreCase) ||
+            uri.Host.EndsWith($".{host}", StringComparison.OrdinalIgnoreCase));
     }
 
     private static string NormalizeUrl(string url)
@@ -109,7 +206,7 @@ public sealed class SearXngProductSearchProvider(
         return uri.GetLeftPart(UriPartial.Path).TrimEnd('/').ToLowerInvariant();
     }
 
-    private sealed record ScoredCandidate(ProductSearchCandidate Candidate, int Score);
+    private sealed record ScoredCandidate(ProductSearchCandidate Candidate, int Score, int BestRank);
 
     private sealed class SearXngSearchResponse
     {
