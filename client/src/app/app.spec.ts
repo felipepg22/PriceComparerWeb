@@ -90,7 +90,7 @@ describe('App', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Enter at least 2 characters.');
-    httpTesting.expectNone('http://localhost:5235/api/products/search');
+    httpTesting.expectNone('/api/products/search');
   });
 
   it('posts a trimmed query with a null currency when the select is empty', async () => {
@@ -101,7 +101,7 @@ describe('App', () => {
 
     submitSearch(fixture);
 
-    const request = httpTesting.expectOne('http://localhost:5235/api/products/search');
+    const request = httpTesting.expectOne('/api/products/search');
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({ query: 'iphone 15', currency: null });
 
@@ -128,7 +128,7 @@ describe('App', () => {
 
     submitSearch(fixture);
 
-    const request = httpTesting.expectOne('http://localhost:5235/api/products/search');
+    const request = httpTesting.expectOne('/api/products/search');
     expect(request.request.body).toEqual({ query: 'iphone 15', currency: 'BRL' });
 
     request.flush({
@@ -153,7 +153,7 @@ describe('App', () => {
 
     submitSearch(fixture);
 
-    const request = httpTesting.expectOne('http://localhost:5235/api/products/search');
+    const request = httpTesting.expectOne('/api/products/search');
     request.flush({
       query: 'notebook',
       currency: null,
@@ -215,7 +215,7 @@ describe('App', () => {
 
     const longTitle = 'Professional Ultrawide Monitor With Extra Long Product Name 49 Inch USB-C Docking KVM HDR';
     const longSeller = 'Very Long Seller Name Marketplace Authorized Distribution Partner';
-    const request = httpTesting.expectOne('http://localhost:5235/api/products/search');
+    const request = httpTesting.expectOne('/api/products/search');
     request.flush({
       query: 'ultrawide monitor',
       currency: null,
@@ -259,7 +259,7 @@ describe('App', () => {
 
     submitSearch(fixture);
 
-    const request = httpTesting.expectOne('http://localhost:5235/api/products/search');
+    const request = httpTesting.expectOne('/api/products/search');
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -286,7 +286,7 @@ describe('App', () => {
 
     submitSearch(fixture);
 
-    const request = httpTesting.expectOne('http://localhost:5235/api/products/search');
+    const request = httpTesting.expectOne('/api/products/search');
     request.flush({
       query: 'tablet',
       currency: null,
@@ -330,7 +330,7 @@ describe('App', () => {
 
     submitSearch(fixture);
 
-    const request = httpTesting.expectOne('http://localhost:5235/api/products/search');
+    const request = httpTesting.expectOne('/api/products/search');
     request.flush({
       query: 'headphones',
       currency: null,
@@ -391,7 +391,7 @@ describe('App', () => {
 
     submitSearch(fixture);
 
-    const request = httpTesting.expectOne('http://localhost:5235/api/products/search');
+    const request = httpTesting.expectOne('/api/products/search');
     request.flush({
       query: 'notebook',
       currency: null,
@@ -443,7 +443,7 @@ describe('App', () => {
 
     submitSearch(fixture);
 
-    const request = httpTesting.expectOne('http://localhost:5235/api/products/search');
+    const request = httpTesting.expectOne('/api/products/search');
     request.flush({
       query: 'camera',
       currency: null,
@@ -470,7 +470,7 @@ describe('App', () => {
 
     submitSearch(fixture);
 
-    const request = httpTesting.expectOne('http://localhost:5235/api/products/search');
+    const request = httpTesting.expectOne('/api/products/search');
     request.flush(
       { error: 'Backend unavailable.' },
       { status: 500, statusText: 'Server Error' }

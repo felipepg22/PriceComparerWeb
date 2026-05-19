@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "npx -y node@20.19.0 ./node_modules/@angular/cli/bin/ng",
-    "start": "npm run ng -- serve",
+    "start": "npm run ng -- serve --proxy-config proxy.conf.json",
     "build": "npm run ng -- build",
     "watch": "npm run ng -- build --watch --configuration development",
     "test": "npm run ng -- test"

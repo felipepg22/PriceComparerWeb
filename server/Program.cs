@@ -39,7 +39,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("client");
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.MapPost("/api/scrape", async (ScrapeRequest request, IPageScraper pageScraper, CancellationToken cancellationToken) =>
 {

@@ -33,10 +33,10 @@ It returns structured page metadata such as final URL, status code, title, headi
 ## Run server
 
 ```bash
-dotnet run --project server/PriceComparerWeb.Api.csproj
+dotnet run --project server/PriceComparerWeb.Api.csproj --launch-profile http
 ```
 
-Default HTTPS URL is usually `https://localhost:7168`.
+The development API listens on `http://localhost:5235`.
 
 ## Search provider
 
@@ -65,4 +65,4 @@ npm install
 npm start
 ```
 
-Open `http://localhost:4200`.
+Open `http://localhost:4200`. The Angular dev server proxies `/api` requests to `http://localhost:5235`.

@@ -63,7 +63,7 @@ export class App {
       currency: currency || null
     };
 
-    this.http.post<ProductSearchResponse>('http://localhost:5235/api/products/search', body)
+    this.http.post<ProductSearchResponse>('/api/products/search', body)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (response) => this.result.set(response),
