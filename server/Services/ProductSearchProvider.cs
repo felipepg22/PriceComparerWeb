@@ -105,7 +105,7 @@ public sealed class SearXngProductSearchProvider(
             .ThenBy(candidate => candidate.BestRank)
             .ThenBy(candidate => candidate.Candidate.SourceName)
             .Select(candidate => candidate.Candidate)
-            .Take(Math.Clamp(searchOptions.MaxCandidates, 1, 5))
+            .Take(Math.Max(1, searchOptions.MaxCandidates))
             .ToArray();
     }
 

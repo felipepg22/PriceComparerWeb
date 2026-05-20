@@ -185,7 +185,7 @@ describe('App', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     const summary = compiled.querySelector('[aria-label="Search summary"]') as HTMLElement;
-    const results = compiled.querySelector('[aria-label="Found offers"]') as HTMLElement;
+    const results = compiled.querySelector('[aria-label="Top ranked offers"]') as HTMLElement;
     const card = results.querySelector('app-offer-card') as HTMLElement;
     const link = card.querySelector('a') as HTMLAnchorElement;
 
@@ -381,6 +381,137 @@ describe('App', () => {
     expect(cards[0].textContent).toContain('80% · High');
     expect(cards[1].textContent).toContain('50% · Medium');
     expect(cards[2].textContent).toContain('49% · Low');
+  });
+
+  it('preserves API-ranked offer order without client sorting', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    setSearchQuery(fixture, 'keyboard');
+
+    submitSearch(fixture);
+
+    const request = httpTesting.expectOne('/api/products/search');
+    request.flush({
+      query: 'keyboard',
+      currency: null,
+      fetchedAtUtc: '2026-05-11T12:00:00Z',
+      candidateCount: 6,
+      attemptedSourceCount: 6,
+      offers: [{
+        title: 'Second Cheapest but Most Reliable',
+        priceAmount: 300,
+        currency: 'USD',
+        seller: 'Store Reliable',
+        url: 'https://example.com/offer-a',
+        sourceName: 'Source A',
+        extractionMethod: 'structured-data',
+        confidence: 0.95,
+        fetchedAtUtc: '2026-05-11T12:00:00Z'
+      }, {
+        title: 'Cheapest but Less Reliable',
+        priceAmount: 200,
+        currency: 'USD',
+        seller: 'Store Cheaper',
+        url: 'https://example.com/offer-b',
+        sourceName: 'Source B',
+        extractionMethod: 'visible-text',
+        confidence: 0.55,
+        fetchedAtUtc: '2026-05-11T12:00:00Z'
+      }, {
+        title: 'Most Expensive',
+        priceAmount: 500,
+        currency: 'USD',
+        seller: 'Store Expensive',
+        url: 'https://example.com/offer-c',
+        sourceName: 'Source C',
+        extractionMethod: 'metadata',
+        confidence: 0.85,
+        fetchedAtUtc: '2026-05-11T12:00:00Z'
+      }],
+      attemptedSources: [],
+      warnings: []
+    });
+
+    fixture.detectChanges();
+
+    const cards = Array.from(
+      fixture.nativeElement.querySelectorAll('app-offer-card')
+    ) as HTMLElement[];
+
+    expect(cards).toHaveLength(3);
+    expect(cards[0].textContent).toContain('Second Cheapest but Most Reliable');
+    expect(cards[1].textContent).toContain('Cheapest but Less Reliable');
+    expect(cards[2].textContent).toContain('Most Expensive');
+  });
+
+  it('renders fewer than ten ranked offers when API returns less', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    setSearchQuery(fixture, 'mouse');
+
+    submitSearch(fixture);
+
+    const request = httpTesting.expectOne('/api/products/search');
+    request.flush({
+      query: 'mouse',
+      currency: null,
+      fetchedAtUtc: '2026-05-11T12:00:00Z',
+      candidateCount: 5,
+      attemptedSourceCount: 5,
+      offers: [{
+        title: 'Mouse One',
+        priceAmount: 50,
+        currency: 'USD',
+        seller: 'Store One',
+        url: 'https://example.com/mouse-1',
+        sourceName: 'Source One',
+        extractionMethod: 'structured-data',
+        confidence: 0.9,
+        fetchedAtUtc: '2026-05-11T12:00:00Z'
+      }, {
+        title: 'Mouse Two',
+        priceAmount: 60,
+        currency: 'USD',
+        seller: 'Store Two',
+        url: 'https://example.com/mouse-2',
+        sourceName: 'Source Two',
+        extractionMethod: 'metadata',
+        confidence: 0.8,
+        fetchedAtUtc: '2026-05-11T12:00:00Z'
+      }, {
+        title: 'Mouse Three',
+        priceAmount: 65,
+        currency: 'USD',
+        seller: 'Store Three',
+        url: 'https://example.com/mouse-3',
+        sourceName: 'Source Three',
+        extractionMethod: 'visible-text',
+        confidence: 0.6,
+        fetchedAtUtc: '2026-05-11T12:00:00Z'
+      }, {
+        title: 'Mouse Four',
+        priceAmount: 70,
+        currency: 'USD',
+        seller: 'Store Four',
+        url: 'https://example.com/mouse-4',
+        sourceName: 'Source Four',
+        extractionMethod: 'visible-text',
+        confidence: 0.58,
+        fetchedAtUtc: '2026-05-11T12:00:00Z'
+      }],
+      attemptedSources: [],
+      warnings: []
+    });
+
+    fixture.detectChanges();
+
+    const cards = Array.from(
+      fixture.nativeElement.querySelectorAll('app-offer-card')
+    ) as HTMLElement[];
+
+    expect(cards).toHaveLength(4);
   });
 
   it('keeps successful offers visible while hiding partial-failure details', async () => {

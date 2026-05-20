@@ -15,11 +15,27 @@ public sealed class ProductSearchService(
     IPageScraper pageScraper,
     IPriceExtractor priceExtractor) : IProductSearchService
 {
+    private const int MaxRankedOffers = 10;
+
+    private static readonly string[] LowValueHosts =
+    [
+        "facebook.com",
+        "instagram.com",
+        "linkedin.com",
+        "pinterest.com",
+        "reddit.com",
+        "tiktok.com",
+        "vimeo.com",
+        "wikipedia.org",
+        "x.com",
+        "youtube.com"
+    ];
+
     public async Task<ProductSearchResponse> SearchAsync(ProductSearchRequest request, CancellationToken cancellationToken)
     {
         var requestedCurrency = NormalizeRequestedCurrency(request.Currency);
         var candidates = await searchProvider.FindCandidatesAsync(request.Query, cancellationToken);
-        var maxConcurrency = Math.Clamp(options.Value.MaxConcurrency, 1, Math.Clamp(options.Value.MaxCandidates, 1, 5));
+        var maxConcurrency = Math.Clamp(options.Value.MaxConcurrency, 1, Math.Max(1, options.Value.MaxCandidates));
         var attemptedSources = new List<AttemptedSource>();
         var offers = new List<ProductOffer>();
 
@@ -37,10 +53,16 @@ public sealed class ProductSearchService(
         }
 
         var orderedOffers = offers
-            .OrderBy(offer => !string.IsNullOrWhiteSpace(requestedCurrency) && offer.Currency != requestedCurrency)
-            .ThenBy(offer => offer.PriceAmount)
-            .ThenByDescending(offer => offer.Confidence)
-            .ThenBy(offer => offer.SourceName)
+            .Select(offer => new RankedOffer(offer, ScoreReliability(offer)))
+            .OrderByDescending(ranked => ranked.ReliabilityScore)
+            .ThenBy(ranked => ranked.Offer.PriceAmount)
+            .ThenByDescending(ranked => ranked.Offer.Confidence)
+            .ThenBy(ranked => ranked.Offer.SourceName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(ranked => ranked.Offer.Seller, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(ranked => ranked.Offer.Title, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(ranked => ranked.Offer.Url, StringComparer.OrdinalIgnoreCase)
+            .Select(ranked => ranked.Offer)
+            .Take(MaxRankedOffers)
             .ToArray();
 
         var warnings = attemptedSources
@@ -59,6 +81,44 @@ public sealed class ProductSearchService(
             AttemptedSources: attemptedSources,
             Warnings: warnings);
     }
+
+    private static double ScoreReliability(ProductOffer offer)
+    {
+        var score = 0d;
+        if (Uri.TryCreate(offer.Url, UriKind.Absolute, out var uri))
+        {
+            if (uri.Scheme == Uri.UriSchemeHttps)
+            {
+                score += 0.35;
+            }
+
+            if (IsLowValueHost(uri.Host))
+            {
+                score -= 1.2;
+            }
+        }
+
+        score += offer.ExtractionMethod switch
+        {
+            "structured-data" => 1.2,
+            "metadata" => 0.8,
+            "visible-text" => 0.4,
+            _ => 0.5
+        };
+
+        score += Math.Clamp(offer.Confidence, 0d, 1d);
+
+        return Math.Round(score, 6, MidpointRounding.AwayFromZero);
+    }
+
+    private static bool IsLowValueHost(string host)
+    {
+        return LowValueHosts.Any(knownHost =>
+            host.Equals(knownHost, StringComparison.OrdinalIgnoreCase) ||
+            host.EndsWith($".{knownHost}", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private sealed record RankedOffer(ProductOffer Offer, double ReliabilityScore);
 
     private async Task<CandidateResult> ProcessCandidateAsync(
         ProductSearchCandidate candidate,

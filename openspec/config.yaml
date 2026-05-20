@@ -43,3 +43,4 @@ rules:
   tasks:
     - Use checkbox tasks only.
     - Include build/test/manual verification tasks that match the current repo test coverage.
+    - Always call `openspec-implementation-auditor` as a subagent to verify all tasks were implemented completely and correctly before marking work done.

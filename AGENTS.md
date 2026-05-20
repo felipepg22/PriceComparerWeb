@@ -30,3 +30,7 @@ Use Conventional Commits in English, matching existing history: `feat: add produ
 ## Security & Configuration Tips
 
 Do not commit credentials or private endpoints. Keep local overrides in development settings or environment variables. Do not bypass paywalls, authentication, anti-bot controls, or site terms when scraping.
+
+## OpenSpec Verification Policy
+
+Before considering OpenSpec work complete, always call `openspec-implementation-auditor` as a subagent to verify all OpenSpec tasks were implemented correctly, completely, and traceably.

@@ -3,7 +3,7 @@
     <div class="hero-copy">
       <p class="eyebrow">Product comparison dashboard</p>
       <h1>Price Comparer</h1>
-      <p class="subtitle">Search trusted offers across configured sources and compare what comes back in one place.</p>
+      <p class="subtitle">Search trusted sources and review top ranked offers (up to 10) in one place.</p>
     </div>
 
     <app-search-panel [form]="form" [loading]="loading()" (submitted)="search()"></app-search-panel>
@@ -29,7 +29,7 @@
     ></app-metrics-summary>
 
     @if (dashboardOffers().length > 0) {
-      <section class="results" aria-label="Found offers">
+      <section class="results" aria-label="Top ranked offers">
         @for (offer of dashboardOffers(); track offer.url) {
           <app-offer-card [offer]="offer"></app-offer-card>
         }

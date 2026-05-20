@@ -8,7 +8,7 @@ public sealed class ProductSearchOptions
 
     public string? SearXngBaseUrl { get; set; } = "http://localhost:8080";
 
-    public int MaxCandidates { get; set; } = 5;
+    public int MaxCandidates { get; set; } = 20;
 
     public int MaxConcurrency { get; set; } = 3;
 }
