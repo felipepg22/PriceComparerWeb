@@ -35,7 +35,7 @@ public sealed class ProductSearchService(
     {
         var requestedCurrency = NormalizeRequestedCurrency(request.Currency);
         var candidates = await searchProvider.FindCandidatesAsync(request.Query, cancellationToken);
-        var maxConcurrency = Math.Clamp(options.Value.MaxConcurrency, 1, Math.Max(1, options.Value.MaxCandidates));
+        var maxConcurrency = options.Value.EffectiveMaxConcurrency(candidates.Count);
         var attemptedSources = new List<AttemptedSource>();
         var offers = new List<ProductOffer>();
 

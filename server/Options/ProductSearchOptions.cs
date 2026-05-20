@@ -11,4 +11,13 @@ public sealed class ProductSearchOptions
     public int MaxCandidates { get; set; } = 20;
 
     public int MaxConcurrency { get; set; } = 3;
+
+    public int EffectiveMaxCandidates => Math.Max(1, MaxCandidates);
+
+    public int EffectiveMaxConcurrency(int candidateCount)
+    {
+        var normalizedCandidateCount = Math.Max(1, candidateCount);
+
+        return Math.Min(Math.Max(1, MaxConcurrency), normalizedCandidateCount);
+    }
 }
