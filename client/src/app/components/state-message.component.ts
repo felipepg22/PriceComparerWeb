@@ -11,4 +11,14 @@ export type DashboardStateKind = 'loading' | 'empty' | 'validation' | 'error';
 export class StateMessageComponent {
   @Input({ required: true }) kind!: DashboardStateKind;
   @Input() message = '';
+  @Input({ required: true }) labels!: {
+    loadingTitle: string;
+    loadingDescription: string;
+    emptyTitle: string;
+    emptyDescription: string;
+    validationTitle: string;
+    validationDescription: string;
+    errorTitle: string;
+    errorDescription: string;
+  };
 }

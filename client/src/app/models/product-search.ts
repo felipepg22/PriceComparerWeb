@@ -1,3 +1,5 @@
+import { SupportedCurrency } from './localization';
+
 export interface ProductSearchResponse {
   query: string;
   currency: string | null;
@@ -12,7 +14,7 @@ export interface ProductSearchResponse {
 export interface ProductOffer {
   title: string;
   priceAmount: number;
-  currency: 'BRL' | 'USD' | 'EUR';
+  currency: SupportedCurrency;
   seller: string;
   url: string;
   sourceName: string;
@@ -29,42 +31,19 @@ export interface AttemptedSource {
   statusCode: number | null;
 }
 
-export type DashboardConfidenceLabel = 'High' | 'Medium' | 'Low';
-
 export interface DashboardOffer {
   title: string;
-  formattedPrice: string;
+  displayPrice: string;
+  originalPrice: string;
   sellerLabel: string;
   sourceName: string;
   extractionMethod: string;
   confidencePercent: string;
-  confidenceLabel: DashboardConfidenceLabel;
+  confidenceLabel: string;
+  conversionUnavailable: boolean;
+  conversionUnavailableLabel: string;
+  freshnessLabel: string;
+  openOfferLabel: string;
+  originalPriceLabel: string;
   url: string;
-}
-
-export function formatPriceAmount(amount: number, currency: ProductOffer['currency']): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency
-  }).format(amount);
-}
-
-export function getSellerLabel(offer: Pick<ProductOffer, 'seller' | 'sourceName'>): string {
-  return offer.seller.trim() || offer.sourceName;
-}
-
-export function getConfidencePercent(confidence: number): string {
-  return `${Math.round(confidence * 100)}%`;
-}
-
-export function getConfidenceLabel(confidence: number): DashboardConfidenceLabel {
-  if (confidence >= 0.8) {
-    return 'High';
-  }
-
-  if (confidence >= 0.5) {
-    return 'Medium';
-  }
-
-  return 'Low';
 }

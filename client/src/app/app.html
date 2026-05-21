@@ -1,43 +1,62 @@
 <main class="page">
   <section class="dashboard-hero">
     <div class="hero-copy">
-      <p class="eyebrow">Product comparison dashboard</p>
+      <p class="eyebrow">{{ labels().heroEyebrow }}</p>
       <h1>Price Comparer</h1>
-      <p class="subtitle">Search trusted sources and review top ranked offers (up to 10) in one place.</p>
+      <p class="subtitle">{{ labels().heroSubtitle }}</p>
+      <div class="preferences-row">
+        <div class="preferences-field">
+          <label for="locale">{{ labels().languageLabel }}</label>
+          <select id="locale" [value]="preferences.activeLocale()" (change)="onLocaleChange($any($event.target).value)">
+            @for (locale of localeOptions; track locale.code) {
+              <option [value]="locale.code">{{ locale.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="preferences-field">
+          <label for="displayCurrency">{{ labels().displayCurrencyLabel }}</label>
+          <select id="displayCurrency" [value]="preferences.displayCurrency()" (change)="onDisplayCurrencyChange($any($event.target).value)">
+            @for (currency of currencyOptions; track currency.code) {
+              <option [value]="currency.code">{{ currency.label }}</option>
+            }
+          </select>
+        </div>
+      </div>
     </div>
 
-    <app-search-panel [form]="form" [loading]="loading()" (submitted)="search()"></app-search-panel>
+    <app-search-panel [form]="form" [loading]="loading()" [labels]="labels()" (submitted)="search()"></app-search-panel>
   </section>
 
   @if (loading()) {
-    <app-state-message kind="loading"></app-state-message>
+    <app-state-message kind="loading" [labels]="labels()"></app-state-message>
   }
 
   @if (hasQueryError()) {
-    <app-state-message kind="validation"></app-state-message>
+    <app-state-message kind="validation" [labels]="labels()"></app-state-message>
   }
 
   @if (apiError()) {
-    <app-state-message kind="error" [message]="apiError() || ''"></app-state-message>
+    <app-state-message kind="error" [labels]="labels()" [message]="apiError() || ''"></app-state-message>
   }
 
   @if (result(); as data) {
     <app-metrics-summary
-      [foundOffers]="data.offers.length"
-      [candidatePages]="data.candidateCount"
-      [attemptedSources]="data.attemptedSourceCount"
+      [foundOffers]="summaryFoundOffers()"
+      [candidatePages]="summaryCandidatePages()"
+      [attemptedSources]="summaryAttemptedSources()"
+      [labels]="labels()"
     ></app-metrics-summary>
 
     @if (dashboardOffers().length > 0) {
-      <section class="results" aria-label="Top ranked offers">
+      <section class="results" [attr.aria-label]="labels().topOffersAriaLabel">
         @for (offer of dashboardOffers(); track offer.url) {
           <app-offer-card [offer]="offer"></app-offer-card>
         }
       </section>
     } @else if (hasSearched() && !loading() && !apiError()) {
-      <app-state-message kind="empty"></app-state-message>
+      <app-state-message kind="empty" [labels]="labels()"></app-state-message>
     }
   } @else if (hasSearched() && !loading() && !apiError()) {
-    <app-state-message kind="empty"></app-state-message>
+    <app-state-message kind="empty" [labels]="labels()"></app-state-message>
   }
 </main>

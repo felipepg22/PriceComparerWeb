@@ -1,16 +1,20 @@
 using PriceComparerWeb.Api.Models;
 using PriceComparerWeb.Api.Options;
 using PriceComparerWeb.Api.Services;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.Configure<ProductSearchOptions>(
     builder.Configuration.GetSection(ProductSearchOptions.SectionName));
+builder.Services.Configure<CurrencyConversionOptions>(
+    builder.Configuration.GetSection(CurrencyConversionOptions.SectionName));
 builder.Services.AddSingleton<IPageScraper, PageScraper>();
 builder.Services.AddSingleton<IProductSearchProvider, SearXngProductSearchProvider>();
 builder.Services.AddSingleton<IPriceExtractor, PriceExtractor>();
 builder.Services.AddSingleton<IProductSearchService, ProductSearchService>();
+builder.Services.AddSingleton<ICurrencyConversionService, CurrencyConversionService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("client", policy =>
@@ -28,6 +32,11 @@ builder.Services.AddHttpClient("scraper", client =>
 builder.Services.AddHttpClient("searxng", client =>
 {
     client.Timeout = TimeSpan.FromSeconds(15);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("PriceComparerWeb/1.0");
+});
+builder.Services.AddHttpClient("exchange-rates", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(5);
     client.DefaultRequestHeaders.UserAgent.ParseAdd("PriceComparerWeb/1.0");
 });
 
@@ -93,6 +102,34 @@ app.MapPost("/api/products/search", async (
     }
 })
 .WithName("SearchProducts");
+
+app.MapPost("/api/conversion-rates", async (
+    CurrencyConversionRequest request,
+    ICurrencyConversionService conversionService,
+    IOptions<CurrencyConversionOptions> options,
+    CancellationToken cancellationToken) =>
+{
+    if (string.IsNullOrWhiteSpace(request.TargetCurrency))
+    {
+        return Results.BadRequest(new { error = "Target currency is required." });
+    }
+
+    var supported = options.Value.SupportedCurrencies.Select(currency => currency.ToUpperInvariant()).ToHashSet();
+    var normalizedRequest = new CurrencyConversionRequest(
+        request.SourceCurrencies.Select(currency => currency.Trim().ToUpperInvariant()).ToArray(),
+        request.TargetCurrency.Trim().ToUpperInvariant());
+
+    var includesUnsupported = normalizedRequest.SourceCurrencies.Any(currency => !supported.Contains(currency)) ||
+                              !supported.Contains(normalizedRequest.TargetCurrency);
+    if (includesUnsupported)
+    {
+        return Results.BadRequest(new { error = "Currencies must be BRL, USD, or EUR." });
+    }
+
+    var response = await conversionService.GetRatesAsync(normalizedRequest, cancellationToken);
+    return Results.Ok(response);
+})
+.WithName("GetConversionRates");
 
 app.Run();
 

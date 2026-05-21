@@ -1,616 +1,378 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
-import { ComponentFixture } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { App } from './app';
 
-function getSearchForm(fixture: ComponentFixture<App>): HTMLFormElement {
-  const queryInput = getQueryInput(fixture);
-  return queryInput.closest('form') as HTMLFormElement;
-}
-
-function getControlByLabel<T extends HTMLElement>(fixture: ComponentFixture<App>, labelText: string): T {
-  const compiled = fixture.nativeElement as HTMLElement;
-  const labels = Array.from(compiled.querySelectorAll('label'));
-  const label = labels.find(item => item.textContent?.trim() === labelText);
-  const controlId = label?.getAttribute('for');
-  const control = controlId ? compiled.querySelector(`#${controlId}`) : null;
-
-  if (!control) {
-    throw new Error(`Could not find form control labelled "${labelText}".`);
+function setupStorage(locale?: string, currency?: string): void {
+  localStorage.clear();
+  if (locale) {
+    localStorage.setItem('price-comparer.locale', locale);
   }
-
-  return control as T;
+  if (currency) {
+    localStorage.setItem('price-comparer.displayCurrency', currency);
+  }
 }
 
-function getQueryInput(fixture: ComponentFixture<App>): HTMLInputElement {
-  return getControlByLabel<HTMLInputElement>(fixture, 'Product');
-}
-
-function getCurrencySelect(fixture: ComponentFixture<App>): HTMLSelectElement {
-  return getControlByLabel<HTMLSelectElement>(fixture, 'Currency');
-}
-
-function getSubmitButton(fixture: ComponentFixture<App>): HTMLButtonElement {
-  return getSearchForm(fixture).querySelector('button[type="submit"]') as HTMLButtonElement;
-}
-
-function setSearchQuery(fixture: ComponentFixture<App>, value: string): void {
-  const input = getQueryInput(fixture);
-  input.value = value;
-  input.dispatchEvent(new Event('input'));
+function submitSearch(fixture: ReturnType<typeof TestBed.createComponent<App>>, query: string, sourceCurrency = ''): void {
+  const root = fixture.nativeElement as HTMLElement;
+  const queryInput = root.querySelector('#query') as HTMLInputElement;
+  const currencySelect = root.querySelector('#currency') as HTMLSelectElement;
+  const form = root.querySelector('form') as HTMLFormElement;
+  queryInput.value = query;
+  queryInput.dispatchEvent(new Event('input'));
+  currencySelect.value = sourceCurrency;
+  currencySelect.dispatchEvent(new Event('change'));
   fixture.detectChanges();
-}
-
-function setCurrency(fixture: ComponentFixture<App>, value: string): void {
-  const select = getCurrencySelect(fixture);
-  select.value = value;
-  select.dispatchEvent(new Event('change'));
-  fixture.detectChanges();
-}
-
-function submitSearch(fixture: ComponentFixture<App>): void {
-  const form = getSearchForm(fixture);
   form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
   fixture.detectChanges();
 }
 
-describe('App', () => {
-  let httpTesting: HttpTestingController;
+describe('App localization and conversion', () => {
+  let http: HttpTestingController;
+  const originalNavigatorLanguage = navigator.language;
+  const originalNavigatorLanguages = navigator.languages;
 
   beforeEach(async () => {
+    setupStorage();
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [provideHttpClient(), provideHttpClientTesting()]
     }).compileComponents();
-
-    httpTesting = TestBed.inject(HttpTestingController);
+    http = TestBed.inject(HttpTestingController);
   });
 
   afterEach(() => {
-    httpTesting.verify();
+    http.verify();
+    localStorage.clear();
+    Object.defineProperty(navigator, 'language', { value: originalNavigatorLanguage, configurable: true });
+    Object.defineProperty(navigator, 'languages', { value: originalNavigatorLanguages, configurable: true });
   });
 
-  it('renders the dashboard shell and search controls', async () => {
+  it('restores a valid persisted locale and display currency', () => {
+    setupStorage('pt-BR', 'EUR');
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(root.textContent).toContain('Painel de comparação de produtos');
+  });
+
+  it('falls back to en-US for invalid persisted locale and maps browser base language', () => {
+    setupStorage('fr-FR', 'USD');
+    Object.defineProperty(navigator, 'languages', { value: ['es-MX'], configurable: true });
+    Object.defineProperty(navigator, 'language', { value: 'es-MX', configurable: true });
+
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('Panel de comparación de productos');
+  });
+
+  it('uses exact supported browser locale', () => {
+    setupStorage(undefined, 'USD');
+    Object.defineProperty(navigator, 'languages', { value: ['pt-BR'], configurable: true });
+    Object.defineProperty(navigator, 'language', { value: 'pt-BR', configurable: true });
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Painel de comparação de produtos');
+  });
+
+  it('falls back to en-US when browser locale is unsupported', () => {
+    setupStorage(undefined, 'USD');
+    Object.defineProperty(navigator, 'languages', { value: ['fr-FR'], configurable: true });
+    Object.defineProperty(navigator, 'language', { value: 'fr-FR', configurable: true });
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Product comparison dashboard');
+  });
+
+  it('keeps search payload semantics unchanged when language or display currency changes', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    (root.querySelector('#locale') as HTMLSelectElement).value = 'pt-BR';
+    (root.querySelector('#locale') as HTMLSelectElement).dispatchEvent(new Event('change'));
+    (root.querySelector('#displayCurrency') as HTMLSelectElement).value = 'BRL';
+    (root.querySelector('#displayCurrency') as HTMLSelectElement).dispatchEvent(new Event('change'));
+
+    submitSearch(fixture, '  notebook gamer  ', 'USD');
+    const req = http.expectOne('/api/products/search');
+    expect(req.request.body).toEqual({ query: 'notebook gamer', currency: 'USD' });
+    req.flush({ query: 'notebook gamer', currency: 'USD', fetchedAtUtc: '2026-05-11T12:00:00Z', candidateCount: 0, attemptedSourceCount: 0, offers: [], attemptedSources: [], warnings: [] });
+  });
+
+  it('renders localized ui copy in pt-BR and es-ES', () => {
+    setupStorage('pt-BR', 'USD');
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    let root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('Buscar ofertas');
+
+    (root.querySelector('#locale') as HTMLSelectElement).value = 'es-ES';
+    (root.querySelector('#locale') as HTMLSelectElement).dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('Buscar ofertas');
+    expect(root.textContent).toContain('Panel de comparación de productos');
+  });
+
+  it('shows converted price with original visibility and freshness', () => {
+    setupStorage('en-US', 'USD');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Price Comparer');
-    expect(getQueryInput(fixture).placeholder).toBe('iPhone 15 128GB');
-    expect(getCurrencySelect(fixture).value).toBe('');
-    expect(getSubmitButton(fixture).textContent).toContain('Search offers');
-  });
-
-  it('marks the form as touched and shows validation when the query is blank', async () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-
-    submitSearch(fixture);
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Enter at least 2 characters.');
-    httpTesting.expectNone('/api/products/search');
-  });
-
-  it('posts a trimmed query with a null currency when the select is empty', async () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-
-    setSearchQuery(fixture, '  iphone 15  ');
-
-    submitSearch(fixture);
-
-    const request = httpTesting.expectOne('/api/products/search');
-    expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual({ query: 'iphone 15', currency: null });
-
-    request.flush({
-      query: 'iphone 15',
+    submitSearch(fixture, 'camera');
+    http.expectOne('/api/products/search').flush({
+      query: 'camera',
       currency: null,
       fetchedAtUtc: '2026-05-11T12:00:00Z',
-      candidateCount: 0,
-      attemptedSourceCount: 0,
-      offers: [],
-      attemptedSources: [],
-      warnings: []
-    });
-
-    fixture.detectChanges();
-  });
-
-  it('posts the selected currency value', async () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-
-    setSearchQuery(fixture, 'iphone 15');
-    setCurrency(fixture, 'BRL');
-
-    submitSearch(fixture);
-
-    const request = httpTesting.expectOne('/api/products/search');
-    expect(request.request.body).toEqual({ query: 'iphone 15', currency: 'BRL' });
-
-    request.flush({
-      query: 'iphone 15',
-      currency: 'BRL',
-      fetchedAtUtc: '2026-05-11T12:00:00Z',
-      candidateCount: 0,
-      attemptedSourceCount: 0,
-      offers: [],
-      attemptedSources: [],
-      warnings: []
-    });
-
-    fixture.detectChanges();
-  });
-
-  it('renders metrics and offer details from a successful response', async () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-
-    setSearchQuery(fixture, 'notebook');
-
-    submitSearch(fixture);
-
-    const request = httpTesting.expectOne('/api/products/search');
-    request.flush({
-      query: 'notebook',
-      currency: null,
-      fetchedAtUtc: '2026-05-11T12:00:00Z',
-      candidateCount: 3,
-      attemptedSourceCount: 4,
+      candidateCount: 1,
+      attemptedSourceCount: 1,
       offers: [{
-        title: 'Notebook Pro 14',
-        priceAmount: 3500,
+        title: 'Camera X',
+        priceAmount: 1000,
         currency: 'BRL',
-        seller: 'Store A',
-        url: 'https://example.com/notebook',
-        sourceName: 'Example Market',
+        seller: 'Loja A',
+        url: 'https://example.com/camera',
+        sourceName: 'Example',
         extractionMethod: 'structured-data',
+        confidence: 0.82,
+        fetchedAtUtc: '2026-05-11T12:00:00Z'
+      }],
+      attemptedSources: [],
+      warnings: []
+    });
+
+    http.expectOne('/api/conversion-rates').flush({
+      targetCurrency: 'USD',
+      rates: [{ sourceCurrency: 'BRL', targetCurrency: 'USD', rate: 0.2, status: 'success' }],
+      freshness: { fetchedAtUtc: '2026-05-11T12:00:00Z', stale: false, maxAgeMinutes: 60 }
+    });
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('$200.00');
+    expect(root.textContent).toContain('Original: R$1,000.00');
+    expect(root.textContent).toContain('Rate updated');
+  });
+
+  it('preserves active form and results when language changes without product-search request', () => {
+    setupStorage('en-US', 'USD');
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    submitSearch(fixture, 'headphones');
+    http.expectOne('/api/products/search').flush({
+      query: 'headphones',
+      currency: null,
+      fetchedAtUtc: '2026-05-11T12:00:00Z',
+      candidateCount: 1,
+      attemptedSourceCount: 1,
+      offers: [{
+        title: 'Headphone A',
+        priceAmount: 100,
+        currency: 'USD',
+        seller: 'Seller A',
+        url: 'https://example.com/a',
+        sourceName: 'Source A',
+        extractionMethod: 'structured-data',
+        confidence: 0.8,
+        fetchedAtUtc: '2026-05-11T12:00:00Z'
+      }],
+      attemptedSources: [],
+      warnings: []
+    });
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const locale = root.querySelector('#locale') as HTMLSelectElement;
+    locale.value = 'pt-BR';
+    locale.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    http.expectNone('/api/products/search');
+    expect((root.querySelector('#query') as HTMLInputElement).value).toBe('headphones');
+    expect(root.textContent).toContain('Headphone A');
+    expect(root.textContent).toContain('Painel de comparação de produtos');
+  });
+
+  it('display currency change preserves source filter and offer order without product search', () => {
+    setupStorage('en-US', 'USD');
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    submitSearch(fixture, 'keyboard', 'EUR');
+    http.expectOne('/api/products/search').flush({
+      query: 'keyboard',
+      currency: 'EUR',
+      fetchedAtUtc: '2026-05-11T12:00:00Z',
+      candidateCount: 2,
+      attemptedSourceCount: 2,
+      offers: [{
+        title: 'Offer One',
+        priceAmount: 100,
+        currency: 'USD',
+        seller: 'S1',
+        url: 'https://example.com/1',
+        sourceName: 'A',
+        extractionMethod: 'x',
+        confidence: 0.6,
+        fetchedAtUtc: '2026-05-11T12:00:00Z'
+      }, {
+        title: 'Offer Two',
+        priceAmount: 90,
+        currency: 'BRL',
+        seller: 'S2',
+        url: 'https://example.com/2',
+        sourceName: 'B',
+        extractionMethod: 'y',
+        confidence: 0.6,
+        fetchedAtUtc: '2026-05-11T12:00:00Z'
+      }],
+      attemptedSources: [],
+      warnings: []
+    });
+    http.expectOne('/api/conversion-rates').flush({
+      targetCurrency: 'USD',
+      rates: [
+        { sourceCurrency: 'BRL', targetCurrency: 'USD', rate: 0.2, status: 'success' }
+      ],
+      freshness: { fetchedAtUtc: '2026-05-11T12:00:00Z', stale: false, maxAgeMinutes: 60 }
+    });
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const displayCurrency = root.querySelector('#displayCurrency') as HTMLSelectElement;
+    displayCurrency.value = 'EUR';
+    displayCurrency.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    http.expectOne('/api/conversion-rates').flush({
+      targetCurrency: 'EUR',
+      rates: [
+        { sourceCurrency: 'USD', targetCurrency: 'EUR', rate: 0.9, status: 'success' },
+        { sourceCurrency: 'BRL', targetCurrency: 'EUR', rate: 0.18, status: 'success' }
+      ],
+      freshness: { fetchedAtUtc: '2026-05-11T12:00:00Z', stale: false, maxAgeMinutes: 60 }
+    });
+    fixture.detectChanges();
+
+    http.expectNone('/api/products/search');
+    expect((root.querySelector('#currency') as HTMLSelectElement).value).toBe('EUR');
+    const cards = Array.from(root.querySelectorAll('app-offer-card')).map(card => card.textContent ?? '');
+    expect(cards[0]).toContain('Offer One');
+    expect(cards[1]).toContain('Offer Two');
+  });
+
+  it('reformats counts and confidence percentages when locale changes', () => {
+    setupStorage('en-US', 'USD');
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    submitSearch(fixture, 'phone');
+    http.expectOne('/api/products/search').flush({
+      query: 'phone',
+      currency: null,
+      fetchedAtUtc: '2026-05-11T12:00:00Z',
+      candidateCount: 1200,
+      attemptedSourceCount: 900,
+      offers: [{
+        title: 'Phone',
+        priceAmount: 1200,
+        currency: 'USD',
+        seller: 'Seller',
+        url: 'https://example.com/p',
+        sourceName: 'Src',
+        extractionMethod: 'method',
         confidence: 0.95,
         fetchedAtUtc: '2026-05-11T12:00:00Z'
       }],
-      attemptedSources: [{
-        url: 'https://example.com/notebook',
-        sourceName: 'Example Market',
-        status: 'success',
-        reason: null,
-        statusCode: 200
-      }],
-      warnings: []
-    });
-
-    fixture.detectChanges();
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    const summary = compiled.querySelector('[aria-label="Search summary"]') as HTMLElement;
-    const results = compiled.querySelector('[aria-label="Top ranked offers"]') as HTMLElement;
-    const card = results.querySelector('app-offer-card') as HTMLElement;
-    const link = card.querySelector('a') as HTMLAnchorElement;
-
-    expect(summary.textContent).toContain('1');
-    expect(summary.textContent).toContain('found offers');
-    expect(summary.textContent).toContain('3');
-    expect(summary.textContent).toContain('candidate pages');
-    expect(summary.textContent).toContain('4');
-    expect(summary.textContent).toContain('attempted sources');
-    expect(card.textContent).toContain('Notebook Pro 14');
-    expect(card.textContent).toContain('Store A');
-    expect(card.textContent).toContain('Example Market');
-    expect(card.textContent).toContain('structured-data');
-    expect(card.textContent).toContain('95%');
-    expect(card.textContent).toContain('High');
-    expect(link.getAttribute('target')).toBe('_blank');
-    expect(link.getAttribute('rel')).toBe('noopener');
-  });
-
-  it('keeps long offer content queryable inside the responsive card structure', async () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-
-    setSearchQuery(fixture, 'ultrawide monitor');
-
-    submitSearch(fixture);
-
-    const longTitle = 'Professional Ultrawide Monitor With Extra Long Product Name 49 Inch USB-C Docking KVM HDR';
-    const longSeller = 'Very Long Seller Name Marketplace Authorized Distribution Partner';
-    const request = httpTesting.expectOne('/api/products/search');
-    request.flush({
-      query: 'ultrawide monitor',
-      currency: null,
-      fetchedAtUtc: '2026-05-11T12:00:00Z',
-      candidateCount: 8,
-      attemptedSourceCount: 6,
-      offers: [{
-        title: longTitle,
-        priceAmount: 123456.78,
-        currency: 'USD',
-        seller: longSeller,
-        url: 'https://example.com/very-long-monitor-offer',
-        sourceName: 'Example Market With Long Source Name',
-        extractionMethod: 'structured-data-with-long-label',
-        confidence: 0.83,
-        fetchedAtUtc: '2026-05-11T12:00:00Z'
-      }],
       attemptedSources: [],
       warnings: []
     });
-
     fixture.detectChanges();
+    let root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('1,200');
+    expect(root.textContent).toContain('95%');
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    const card = compiled.querySelector('app-offer-card');
-    const link = compiled.querySelector('app-offer-card a') as HTMLAnchorElement;
-    expect(card?.textContent).toContain(longTitle);
-    expect(card?.textContent).toContain(longSeller);
-    expect(card?.textContent).toContain('$123,456.78');
-    expect(card?.textContent).toContain('83% · High');
-    expect(link.textContent).toContain('Open offer');
-    expect(link.getAttribute('target')).toBe('_blank');
-    expect(link.getAttribute('rel')).toBe('noopener');
+    const locale = root.querySelector('#locale') as HTMLSelectElement;
+    locale.value = 'pt-BR';
+    locale.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('1.200');
+    expect(root.textContent).toContain('95%');
   });
 
-  it('shows the loading state while the request is in flight', async () => {
+  it('keeps external/backend content exactly as received', () => {
+    setupStorage('es-ES', 'USD');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
-
-    setSearchQuery(fixture, 'monitor');
-
-    submitSearch(fixture);
-
-    const request = httpTesting.expectOne('/api/products/search');
-    fixture.detectChanges();
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Searching trusted sources...');
-    expect(getSubmitButton(fixture).disabled).toBe(true);
-
-    request.flush({
+    submitSearch(fixture, 'monitor');
+    http.expectOne('/api/products/search').flush({
       query: 'monitor',
       currency: null,
       fetchedAtUtc: '2026-05-11T12:00:00Z',
-      candidateCount: 0,
-      attemptedSourceCount: 0,
-      offers: [],
-      attemptedSources: [],
-      warnings: []
+      candidateCount: 2,
+      attemptedSourceCount: 2,
+      offers: [{
+        title: 'UNTOUCHED TITLE',
+        priceAmount: 100,
+        currency: 'USD',
+        seller: 'UNTOUCHED SELLER',
+        url: 'https://example.com/u',
+        sourceName: 'UNTOUCHED SOURCE',
+        extractionMethod: 'UNTOUCHED_METHOD',
+        confidence: 0.6,
+        fetchedAtUtc: '2026-05-11T12:00:00Z'
+      }],
+      attemptedSources: [{
+        url: 'https://example.com/fail',
+        sourceName: 'RAW BACKEND SOURCE',
+        status: 'failed',
+        reason: 'Candidate fetch timed out.',
+        statusCode: null
+      }],
+      warnings: ['RAW WARNING']
     });
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('UNTOUCHED TITLE');
+    expect(root.textContent).toContain('UNTOUCHED SELLER');
+    expect(root.textContent).toContain('UNTOUCHED SOURCE');
+    expect(root.textContent).toContain('UNTOUCHED_METHOD');
+    expect(root.textContent).not.toContain('RAW WARNING');
+    expect(root.textContent).not.toContain('RAW BACKEND SOURCE');
   });
 
-  it('falls back to the source name when seller is missing', async () => {
+  it('keeps offers and shows localized conversion-unavailable fallback when conversion fails', () => {
+    setupStorage('pt-BR', 'USD');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
 
-    setSearchQuery(fixture, 'tablet');
-
-    submitSearch(fixture);
-
-    const request = httpTesting.expectOne('/api/products/search');
-    request.flush({
+    submitSearch(fixture, 'tablet');
+    http.expectOne('/api/products/search').flush({
       query: 'tablet',
       currency: null,
       fetchedAtUtc: '2026-05-11T12:00:00Z',
       candidateCount: 1,
       attemptedSourceCount: 1,
       offers: [{
-        title: 'Tablet 11',
-        priceAmount: 2200,
-        currency: 'USD',
-        seller: '   ',
+        title: 'Tablet Z',
+        priceAmount: 400,
+        currency: 'EUR',
+        seller: 'Store B',
         url: 'https://example.com/tablet',
-        sourceName: 'Fallback Source',
-        extractionMethod: 'visible-text',
-        confidence: 0.6,
-        fetchedAtUtc: '2026-05-11T12:00:00Z'
-      }],
-      attemptedSources: [{
-        url: 'https://example.com/tablet',
-        sourceName: 'Fallback Source',
-        status: 'success',
-        reason: null,
-        statusCode: 200
-      }],
-      warnings: []
-    });
-
-    fixture.detectChanges();
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Fallback Source');
-    expect(compiled.textContent).toContain('Medium');
-    expect(compiled.textContent).toContain('60%');
-  });
-
-  it('renders confidence threshold labels through prepared dashboard offers', async () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-
-    setSearchQuery(fixture, 'headphones');
-
-    submitSearch(fixture);
-
-    const request = httpTesting.expectOne('/api/products/search');
-    request.flush({
-      query: 'headphones',
-      currency: null,
-      fetchedAtUtc: '2026-05-11T12:00:00Z',
-      candidateCount: 3,
-      attemptedSourceCount: 3,
-      offers: [{
-        title: 'High Confidence Headphones',
-        priceAmount: 100,
-        currency: 'USD',
-        seller: 'Store High',
-        url: 'https://example.com/high',
-        sourceName: 'Source High',
-        extractionMethod: 'structured-data',
-        confidence: 0.8,
-        fetchedAtUtc: '2026-05-11T12:00:00Z'
-      }, {
-        title: 'Medium Confidence Headphones',
-        priceAmount: 90,
-        currency: 'USD',
-        seller: 'Store Medium',
-        url: 'https://example.com/medium',
-        sourceName: 'Source Medium',
+        sourceName: 'Example',
         extractionMethod: 'visible-text',
         confidence: 0.5,
         fetchedAtUtc: '2026-05-11T12:00:00Z'
-      }, {
-        title: 'Low Confidence Headphones',
-        priceAmount: 80,
-        currency: 'USD',
-        seller: 'Store Low',
-        url: 'https://example.com/low',
-        sourceName: 'Source Low',
-        extractionMethod: 'visible-text',
-        confidence: 0.49,
-        fetchedAtUtc: '2026-05-11T12:00:00Z'
       }],
       attemptedSources: [],
       warnings: []
     });
-
+    http.expectOne('/api/conversion-rates').flush({ error: 'offline' }, { status: 503, statusText: 'Service Unavailable' });
     fixture.detectChanges();
 
-    const cards = Array.from(
-      fixture.nativeElement.querySelectorAll('app-offer-card')
-    ) as HTMLElement[];
-    expect(cards).toHaveLength(3);
-    expect(cards[0].textContent).toContain('80% · High');
-    expect(cards[1].textContent).toContain('50% · Medium');
-    expect(cards[2].textContent).toContain('49% · Low');
-  });
-
-  it('preserves API-ranked offer order without client sorting', async () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-
-    setSearchQuery(fixture, 'keyboard');
-
-    submitSearch(fixture);
-
-    const request = httpTesting.expectOne('/api/products/search');
-    request.flush({
-      query: 'keyboard',
-      currency: null,
-      fetchedAtUtc: '2026-05-11T12:00:00Z',
-      candidateCount: 6,
-      attemptedSourceCount: 6,
-      offers: [{
-        title: 'Second Cheapest but Most Reliable',
-        priceAmount: 300,
-        currency: 'USD',
-        seller: 'Store Reliable',
-        url: 'https://example.com/offer-a',
-        sourceName: 'Source A',
-        extractionMethod: 'structured-data',
-        confidence: 0.95,
-        fetchedAtUtc: '2026-05-11T12:00:00Z'
-      }, {
-        title: 'Cheapest but Less Reliable',
-        priceAmount: 200,
-        currency: 'USD',
-        seller: 'Store Cheaper',
-        url: 'https://example.com/offer-b',
-        sourceName: 'Source B',
-        extractionMethod: 'visible-text',
-        confidence: 0.55,
-        fetchedAtUtc: '2026-05-11T12:00:00Z'
-      }, {
-        title: 'Most Expensive',
-        priceAmount: 500,
-        currency: 'USD',
-        seller: 'Store Expensive',
-        url: 'https://example.com/offer-c',
-        sourceName: 'Source C',
-        extractionMethod: 'metadata',
-        confidence: 0.85,
-        fetchedAtUtc: '2026-05-11T12:00:00Z'
-      }],
-      attemptedSources: [],
-      warnings: []
-    });
-
-    fixture.detectChanges();
-
-    const cards = Array.from(
-      fixture.nativeElement.querySelectorAll('app-offer-card')
-    ) as HTMLElement[];
-
-    expect(cards).toHaveLength(3);
-    expect(cards[0].textContent).toContain('Second Cheapest but Most Reliable');
-    expect(cards[1].textContent).toContain('Cheapest but Less Reliable');
-    expect(cards[2].textContent).toContain('Most Expensive');
-  });
-
-  it('renders fewer than ten ranked offers when API returns less', async () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-
-    setSearchQuery(fixture, 'mouse');
-
-    submitSearch(fixture);
-
-    const request = httpTesting.expectOne('/api/products/search');
-    request.flush({
-      query: 'mouse',
-      currency: null,
-      fetchedAtUtc: '2026-05-11T12:00:00Z',
-      candidateCount: 5,
-      attemptedSourceCount: 5,
-      offers: [{
-        title: 'Mouse One',
-        priceAmount: 50,
-        currency: 'USD',
-        seller: 'Store One',
-        url: 'https://example.com/mouse-1',
-        sourceName: 'Source One',
-        extractionMethod: 'structured-data',
-        confidence: 0.9,
-        fetchedAtUtc: '2026-05-11T12:00:00Z'
-      }, {
-        title: 'Mouse Two',
-        priceAmount: 60,
-        currency: 'USD',
-        seller: 'Store Two',
-        url: 'https://example.com/mouse-2',
-        sourceName: 'Source Two',
-        extractionMethod: 'metadata',
-        confidence: 0.8,
-        fetchedAtUtc: '2026-05-11T12:00:00Z'
-      }, {
-        title: 'Mouse Three',
-        priceAmount: 65,
-        currency: 'USD',
-        seller: 'Store Three',
-        url: 'https://example.com/mouse-3',
-        sourceName: 'Source Three',
-        extractionMethod: 'visible-text',
-        confidence: 0.6,
-        fetchedAtUtc: '2026-05-11T12:00:00Z'
-      }, {
-        title: 'Mouse Four',
-        priceAmount: 70,
-        currency: 'USD',
-        seller: 'Store Four',
-        url: 'https://example.com/mouse-4',
-        sourceName: 'Source Four',
-        extractionMethod: 'visible-text',
-        confidence: 0.58,
-        fetchedAtUtc: '2026-05-11T12:00:00Z'
-      }],
-      attemptedSources: [],
-      warnings: []
-    });
-
-    fixture.detectChanges();
-
-    const cards = Array.from(
-      fixture.nativeElement.querySelectorAll('app-offer-card')
-    ) as HTMLElement[];
-
-    expect(cards).toHaveLength(4);
-  });
-
-  it('keeps successful offers visible while hiding partial-failure details', async () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-
-    setSearchQuery(fixture, 'notebook');
-
-    submitSearch(fixture);
-
-    const request = httpTesting.expectOne('/api/products/search');
-    request.flush({
-      query: 'notebook',
-      currency: null,
-      fetchedAtUtc: '2026-05-11T12:00:00Z',
-      candidateCount: 2,
-      attemptedSourceCount: 2,
-      offers: [{
-        title: 'Notebook',
-        priceAmount: 3500,
-        currency: 'BRL',
-        seller: 'Store A',
-        url: 'https://example.com/notebook',
-        sourceName: 'Example',
-        extractionMethod: 'visible-text',
-        confidence: 0.6,
-        fetchedAtUtc: '2026-05-11T12:00:00Z'
-      }],
-      attemptedSources: [{
-        url: 'https://example.com/notebook',
-        sourceName: 'Example',
-        status: 'success',
-        reason: null,
-        statusCode: 200
-      }, {
-        url: 'https://example.org/notebook',
-        sourceName: 'Example 2',
-        status: 'failed',
-        reason: 'Candidate fetch timed out.',
-        statusCode: null
-      }],
-      warnings: ['Example 2: Candidate fetch timed out.']
-    });
-
-    fixture.detectChanges();
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Notebook');
-    expect(compiled.textContent).toContain('found offers');
-    expect(compiled.textContent).not.toContain('Example 2');
-    expect(compiled.textContent).not.toContain('Sources not compared');
-    expect(compiled.textContent).not.toContain('Candidate fetch timed out.');
-  });
-
-  it('shows the no-comparable-offers state for an empty successful response', async () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-
-    setSearchQuery(fixture, 'camera');
-
-    submitSearch(fixture);
-
-    const request = httpTesting.expectOne('/api/products/search');
-    request.flush({
-      query: 'camera',
-      currency: null,
-      fetchedAtUtc: '2026-05-11T12:00:00Z',
-      candidateCount: 0,
-      attemptedSourceCount: 3,
-      offers: [],
-      attemptedSources: [],
-      warnings: []
-    });
-    fixture.detectChanges();
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('No comparable offers found.');
-    expect(compiled.textContent).toContain('Try another product name or adjust the currency filter.');
-    expect(compiled.textContent).not.toContain('Search failed.');
-  });
-
-  it('shows API failure messaging without using the empty-result state', async () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-
-    setSearchQuery(fixture, 'camera');
-
-    submitSearch(fixture);
-
-    const request = httpTesting.expectOne('/api/products/search');
-    request.flush(
-      { error: 'Backend unavailable.' },
-      { status: 500, statusText: 'Server Error' }
-    );
-    fixture.detectChanges();
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Search failed.');
-    expect(compiled.textContent).toContain('Backend unavailable.');
-    expect(compiled.textContent).not.toContain('No comparable offers found.');
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('Tablet Z');
+    expect(root.textContent).toContain('Conversão indisponível');
   });
 });

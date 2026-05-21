@@ -7,7 +7,13 @@ import { Component, Input } from '@angular/core';
   styleUrl: './metrics-summary.component.css'
 })
 export class MetricsSummaryComponent {
-  @Input({ required: true }) foundOffers = 0;
-  @Input({ required: true }) candidatePages = 0;
-  @Input({ required: true }) attemptedSources = 0;
+  @Input({ required: true }) foundOffers = '';
+  @Input({ required: true }) candidatePages = '';
+  @Input({ required: true }) attemptedSources = '';
+  @Input({ required: true }) labels!: {
+    summaryAriaLabel: string;
+    foundOffers: string;
+    candidatePages: string;
+    attemptedSources: string;
+  };
 }

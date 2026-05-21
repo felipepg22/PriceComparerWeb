@@ -92,6 +92,29 @@ h1 {
   line-height: 1.5;
 }
 
+.preferences-row {
+  display: grid;
+  gap: var(--wise-space-md);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.preferences-field {
+  display: grid;
+  gap: var(--wise-space-xs);
+}
+
+.preferences-field label {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.preferences-field select {
+  min-height: 42px;
+  border-radius: var(--wise-radius-small);
+  border: 1px solid var(--wise-line);
+  padding: 0 var(--wise-space-md);
+}
+
 app-state-message {
   padding: var(--wise-space-xl);
 }
@@ -131,6 +154,10 @@ app-offer-card {
 }
 
 @media (max-width: 767px) {
+  .preferences-row {
+    grid-template-columns: 1fr;
+  }
+
   app-state-message,
   app-offer-card {
     padding: var(--wise-space-lg);

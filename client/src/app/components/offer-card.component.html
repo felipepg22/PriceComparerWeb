@@ -9,8 +9,14 @@
   </div>
 
   <div class="offer-card__side">
-    <p class="offer-card__price">{{ offer.formattedPrice }}</p>
+    <p class="offer-card__price">{{ offer.displayPrice }}</p>
+    <p class="offer-card__original">{{ offer.originalPriceLabel }}: {{ offer.originalPrice }}</p>
+    @if (offer.conversionUnavailable) {
+      <p class="offer-card__conversion-note">{{ offer.conversionUnavailableLabel }}</p>
+    } @else {
+      <p class="offer-card__conversion-note">{{ offer.freshnessLabel }}</p>
+    }
     <p class="offer-card__confidence">{{ offer.confidencePercent }} · {{ offer.confidenceLabel }}</p>
-    <a [href]="offer.url" target="_blank" rel="noopener">Open offer</a>
+    <a [href]="offer.url" target="_blank" rel="noopener">{{ offer.openOfferLabel }}</a>
   </div>
 </article>

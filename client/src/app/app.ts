@@ -6,16 +6,14 @@ import { MetricsSummaryComponent } from './components/metrics-summary.component'
 import { OfferCardComponent } from './components/offer-card.component';
 import { SearchPanelComponent } from './components/search-panel.component';
 import { StateMessageComponent } from './components/state-message.component';
+import { ConversionRateResponse } from './models/conversion-rate';
+import { SupportedCurrency, SupportedLocale } from './models/localization';
 import {
   DashboardOffer,
-  DashboardConfidenceLabel,
-  getConfidenceLabel,
-  getConfidencePercent,
-  getSellerLabel,
   ProductOffer,
-  ProductSearchResponse,
-  formatPriceAmount
+  ProductSearchResponse
 } from './models/product-search';
+import { PreferencesService } from './services/preferences.service';
 
 @Component({
   selector: 'app-root',
@@ -32,11 +30,18 @@ import {
 })
 export class App {
   private readonly http = inject(HttpClient);
+  protected readonly preferences = inject(PreferencesService);
   protected readonly loading = signal(false);
   protected readonly apiError = signal<string | null>(null);
   protected readonly result = signal<ProductSearchResponse | null>(null);
   protected readonly hasSearched = signal(false);
+  protected readonly conversionRates = signal<Map<SupportedCurrency, number>>(new Map());
+  protected readonly conversionFreshness = signal<string | null>(null);
+  protected readonly conversionUnavailable = signal(false);
+  protected readonly labels = computed(() => this.preferences.translations());
   protected readonly dashboardOffers = computed(() => this.result()?.offers.map(offer => this.dashboardOffer(offer)) ?? []);
+  protected readonly localeOptions = this.preferences.localeOptions;
+  protected readonly currencyOptions = this.preferences.currencyOptions;
 
   protected readonly form = new FormGroup({
     query: new FormControl('', {
@@ -55,6 +60,9 @@ export class App {
     this.loading.set(true);
     this.apiError.set(null);
     this.result.set(null);
+    this.conversionRates.set(new Map());
+    this.conversionUnavailable.set(false);
+    this.conversionFreshness.set(null);
     this.hasSearched.set(true);
 
     const currency = this.form.controls.currency.value;
@@ -66,12 +74,24 @@ export class App {
     this.http.post<ProductSearchResponse>('/api/products/search', body)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (response) => this.result.set(response),
+        next: (response) => {
+          this.result.set(response);
+          this.refreshConversionRates();
+        },
         error: (error) => {
-          const message = error?.error?.error || 'Product search failed. Check backend status and configured search sources.';
+          const message = error?.error?.error || this.labels().errorDescription;
           this.apiError.set(message);
         }
       });
+  }
+
+  protected onLocaleChange(locale: string): void {
+    this.preferences.setLocale(locale as SupportedLocale);
+  }
+
+  protected onDisplayCurrencyChange(currency: string): void {
+    this.preferences.setDisplayCurrency(currency as SupportedCurrency);
+    this.refreshConversionRates();
   }
 
   protected hasQueryError(): boolean {
@@ -79,32 +99,85 @@ export class App {
     return control.touched && control.invalid;
   }
 
-  protected formatPrice(offer: ProductOffer): string {
-    return formatPriceAmount(offer.priceAmount, offer.currency);
+  private refreshConversionRates(): void {
+    const response = this.result();
+    if (!response) {
+      return;
+    }
+
+    const targetCurrency = this.preferences.displayCurrency();
+    const sourceCurrencies = Array.from(new Set(response.offers.map(offer => offer.currency)))
+      .filter(currency => currency !== targetCurrency);
+
+    if (sourceCurrencies.length === 0) {
+      this.conversionRates.set(new Map());
+      this.conversionUnavailable.set(false);
+      this.conversionFreshness.set(null);
+      return;
+    }
+
+    this.http.post<ConversionRateResponse>('/api/conversion-rates', {
+      sourceCurrencies,
+      targetCurrency
+    }).subscribe({
+      next: (conversion) => {
+        const rates = new Map<SupportedCurrency, number>();
+        for (const item of conversion.rates) {
+          if (item.status === 'success' && typeof item.rate === 'number') {
+            rates.set(item.sourceCurrency, item.rate);
+          }
+        }
+
+        this.conversionRates.set(rates);
+        this.conversionFreshness.set(conversion.freshness.fetchedAtUtc);
+        this.conversionUnavailable.set(rates.size === 0);
+      },
+      error: () => {
+        this.conversionRates.set(new Map());
+        this.conversionUnavailable.set(true);
+      }
+    });
   }
 
-  protected sellerLabel(offer: ProductOffer): string {
-    return getSellerLabel(offer);
+  private sellerLabel(offer: ProductOffer): string {
+    return offer.seller.trim() || offer.sourceName;
   }
 
-  protected confidencePercent(offer: ProductOffer): string {
-    return getConfidencePercent(offer.confidence);
-  }
+  private dashboardOffer(offer: ProductOffer): DashboardOffer {
+    const targetCurrency = this.preferences.displayCurrency();
+    const conversionRate = this.conversionRates().get(offer.currency);
+    const hasConversion = offer.currency === targetCurrency || typeof conversionRate === 'number';
+    const displayAmount = offer.currency === targetCurrency ? offer.priceAmount : (conversionRate ? offer.priceAmount * conversionRate : offer.priceAmount);
+    const displayCurrency = offer.currency === targetCurrency ? offer.currency : targetCurrency;
+    const labels = this.labels();
 
-  protected confidenceLabel(offer: ProductOffer): DashboardConfidenceLabel {
-    return getConfidenceLabel(offer.confidence);
-  }
-
-  protected dashboardOffer(offer: ProductOffer): DashboardOffer {
     return {
       title: offer.title,
-      formattedPrice: this.formatPrice(offer),
+      displayPrice: this.preferences.formatCurrency(displayAmount, displayCurrency),
+      originalPrice: this.preferences.formatCurrency(offer.priceAmount, offer.currency),
       sellerLabel: this.sellerLabel(offer),
       sourceName: offer.sourceName,
       extractionMethod: offer.extractionMethod,
-      confidencePercent: this.confidencePercent(offer),
-      confidenceLabel: this.confidenceLabel(offer),
+      confidencePercent: this.preferences.formatConfidence(offer.confidence),
+      confidenceLabel: this.preferences.confidenceLabel(offer.confidence),
+      conversionUnavailable: !hasConversion,
+      conversionUnavailableLabel: labels.conversionUnavailable,
+      freshnessLabel: this.preferences.formatFreshness(this.conversionFreshness()),
+      openOfferLabel: labels.openOffer,
+      originalPriceLabel: labels.originalPrice,
       url: offer.url
     };
+  }
+
+  protected summaryFoundOffers(): string {
+    return this.preferences.formatCount(this.result()?.offers.length ?? 0);
+  }
+
+  protected summaryCandidatePages(): string {
+    return this.preferences.formatCount(this.result()?.candidateCount ?? 0);
+  }
+
+  protected summaryAttemptedSources(): string {
+    return this.preferences.formatCount(this.result()?.attemptedSourceCount ?? 0);
   }
 }

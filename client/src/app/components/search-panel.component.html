@@ -1,19 +1,19 @@
 <form class="search-panel" [formGroup]="form" (ngSubmit)="submitted.emit()">
   <div class="search-panel__field">
-    <label for="query">Product</label>
+    <label for="query">{{ labels.searchProductLabel }}</label>
     <input
       id="query"
       type="search"
       formControlName="query"
-      placeholder="iPhone 15 128GB"
+      [placeholder]="labels.searchProductPlaceholder"
       autocomplete="off"
     />
   </div>
 
   <div class="search-panel__field">
-    <label for="currency">Currency</label>
+    <label for="currency">{{ labels.searchCurrencyFilterLabel }}</label>
     <select id="currency" formControlName="currency">
-      <option value="">Any currency</option>
+      <option value="">{{ labels.searchAnyCurrency }}</option>
       <option value="BRL">BRL</option>
       <option value="USD">USD</option>
       <option value="EUR">EUR</option>
@@ -21,6 +21,6 @@
   </div>
 
   <button type="submit" [disabled]="loading">
-    {{ loading ? 'Searching...' : 'Search offers' }}
+    {{ loading ? labels.searchingButton : labels.searchButton }}
   </button>
 </form>

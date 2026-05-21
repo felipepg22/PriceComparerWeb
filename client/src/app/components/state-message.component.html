@@ -1,20 +1,20 @@
 <section class="state-message" [attr.data-kind]="kind">
   @switch (kind) {
     @case ('loading') {
-      <strong>Searching trusted sources...</strong>
-      <p>We are checking configured retailers and comparing what comes back.</p>
+      <strong>{{ labels.loadingTitle }}</strong>
+      <p>{{ labels.loadingDescription }}</p>
     }
     @case ('empty') {
-      <strong>No comparable offers found.</strong>
-      <p>{{ message || 'Try another product name or adjust the currency filter.' }}</p>
+      <strong>{{ labels.emptyTitle }}</strong>
+      <p>{{ message || labels.emptyDescription }}</p>
     }
     @case ('validation') {
-      <strong>Enter at least 2 characters.</strong>
-      <p>{{ message || 'Use a product name that is long enough to search.' }}</p>
+      <strong>{{ labels.validationTitle }}</strong>
+      <p>{{ message || labels.validationDescription }}</p>
     }
     @case ('error') {
-      <strong>Search failed.</strong>
-      <p>{{ message || 'Check backend status and configured search sources.' }}</p>
+      <strong>{{ labels.errorTitle }}</strong>
+      <p>{{ message || labels.errorDescription }}</p>
     }
   }
 </section>

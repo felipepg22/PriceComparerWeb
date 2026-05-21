@@ -1,14 +1,14 @@
-<section class="metrics-summary" aria-label="Search summary">
+<section class="metrics-summary" [attr.aria-label]="labels.summaryAriaLabel">
   <article>
     <strong>{{ foundOffers }}</strong>
-    <span>found offers</span>
+    <span>{{ labels.foundOffers }}</span>
   </article>
   <article>
     <strong>{{ candidatePages }}</strong>
-    <span>candidate pages</span>
+    <span>{{ labels.candidatePages }}</span>
   </article>
   <article>
     <strong>{{ attemptedSources }}</strong>
-    <span>attempted sources</span>
+    <span>{{ labels.attemptedSources }}</span>
   </article>
 </section>

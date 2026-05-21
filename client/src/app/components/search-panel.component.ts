@@ -11,5 +11,13 @@ import { ReactiveFormsModule, FormGroup } from '@angular/forms';
 export class SearchPanelComponent {
   @Input({ required: true }) form!: FormGroup;
   @Input() loading = false;
+  @Input({ required: true }) labels!: {
+    searchProductLabel: string;
+    searchProductPlaceholder: string;
+    searchCurrencyFilterLabel: string;
+    searchAnyCurrency: string;
+    searchButton: string;
+    searchingButton: string;
+  };
   @Output() submitted = new EventEmitter<void>();
 }

@@ -65,6 +65,14 @@ p {
   line-height: 1.25rem;
 }
 
+.offer-card__original,
+.offer-card__conversion-note {
+  color: var(--wise-body, #454745);
+  font-size: 0.8rem;
+  line-height: 1.2rem;
+  text-align: right;
+}
+
 a {
   display: inline-flex;
   align-items: center;
@@ -100,6 +108,11 @@ a:focus-visible {
   }
 
   .offer-card__price {
+    text-align: left;
+  }
+
+  .offer-card__original,
+  .offer-card__conversion-note {
     text-align: left;
   }
 
