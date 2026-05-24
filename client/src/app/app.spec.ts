@@ -55,6 +55,8 @@ describe('App localization and conversion', () => {
     const root = fixture.nativeElement as HTMLElement;
 
     expect(root.textContent).toContain('Painel de comparação de produtos');
+    expect(document.documentElement.lang).toBe('pt-BR');
+    expect(document.title).toBe('Price Comparer');
   });
 
   it('falls back to en-US for invalid persisted locale and maps browser base language', () => {
@@ -107,14 +109,32 @@ describe('App localization and conversion', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     let root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.topbar')?.getAttribute('aria-label')).toBe('Navegação principal');
+    expect(root.querySelector('.brand')?.getAttribute('aria-label')).toBe('Início do Price Comparer');
+    expect(root.querySelector('.suggestion-chips')?.getAttribute('aria-label')).toBe('Sugestões de busca');
+    expect(root.querySelector('.trust-grid')?.getAttribute('aria-label')).toBe('Como a comparação funciona');
+    expect(root.textContent).toContain('Encontre a melhor oferta, não só a mais barata.');
+    expect(root.textContent).toContain('Busca de produto');
+    expect(root.textContent).toContain('Notebook gamer');
+    expect(root.textContent).toContain('Confie na loja');
     expect(root.textContent).toContain('Buscar ofertas');
 
     (root.querySelector('#locale') as HTMLSelectElement).value = 'es-ES';
     (root.querySelector('#locale') as HTMLSelectElement).dispatchEvent(new Event('change'));
     fixture.detectChanges();
     root = fixture.nativeElement as HTMLElement;
+    expect(document.documentElement.lang).toBe('es-ES');
+    expect(root.querySelector('.topbar')?.getAttribute('aria-label')).toBe('Navegación principal');
+    expect(root.querySelector('.brand')?.getAttribute('aria-label')).toBe('Inicio de Price Comparer');
+    expect(root.querySelector('.suggestion-chips')?.getAttribute('aria-label')).toBe('Sugerencias de búsqueda');
+    expect(root.querySelector('.trust-grid')?.getAttribute('aria-label')).toBe('Cómo funciona la comparación');
+    expect(root.textContent).toContain('Encuentra la mejor oferta, no solo la más barata.');
+    expect(root.textContent).toContain('Búsqueda de producto');
+    expect(root.textContent).toContain('Portátil gaming');
+    expect(root.textContent).toContain('Confía en la tienda');
     expect(root.textContent).toContain('Buscar ofertas');
     expect(root.textContent).toContain('Panel de comparación de productos');
+    expect(root.textContent).not.toContain('Preço claro. Loja confiável.');
   });
 
   it('shows converted price with original visibility and freshness', () => {

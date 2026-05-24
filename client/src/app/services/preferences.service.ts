@@ -25,12 +25,25 @@ export class PreferencesService {
 
   readonly translations = () => TRANSLATIONS[this.activeLocale()];
 
+  constructor() {
+    this.applyDocumentMetadata(this.activeLocale());
+  }
+
   setLocale(locale: SupportedLocale): void {
+    if (!this.isSupportedLocale(locale)) {
+      return;
+    }
+
     this.activeLocale.set(locale);
     localStorage.setItem(STORAGE_LOCALE, locale);
+    this.applyDocumentMetadata(locale);
   }
 
   setDisplayCurrency(currency: SupportedCurrency): void {
+    if (!this.isSupportedCurrency(currency)) {
+      return;
+    }
+
     this.displayCurrency.set(currency);
     localStorage.setItem(STORAGE_DISPLAY_CURRENCY, currency);
   }
@@ -132,5 +145,10 @@ export class PreferencesService {
 
   private isSupportedCurrency(value: string | null): value is SupportedCurrency {
     return !!value && (SUPPORTED_CURRENCIES as readonly string[]).includes(value);
+  }
+
+  private applyDocumentMetadata(locale: SupportedLocale): void {
+    document.documentElement.lang = locale;
+    document.title = TRANSLATIONS[locale].documentTitle;
   }
 }

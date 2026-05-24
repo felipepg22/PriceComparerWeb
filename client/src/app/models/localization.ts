@@ -15,8 +15,16 @@ export interface CurrencyOption {
 }
 
 export interface AppTranslations {
+  documentTitle: string;
+  mainNavigationAriaLabel: string;
+  brandHomeAriaLabel: string;
+  topbarNote: string;
   heroEyebrow: string;
+  heroTitle: string;
   heroSubtitle: string;
+  heroSupport: string;
+  searchIntroTitle: string;
+  searchIntroDescription: string;
   searchProductLabel: string;
   searchProductPlaceholder: string;
   searchCurrencyFilterLabel: string;
@@ -46,6 +54,14 @@ export interface AppTranslations {
   validationDescription: string;
   errorTitle: string;
   errorDescription: string;
+  searchSuggestionsAriaLabel: string;
+  searchSuggestions: readonly string[];
+  trustGridAriaLabel: string;
+  trustCards: readonly {
+    icon: string;
+    title: string;
+    description: string;
+  }[];
 }
 
 export const LOCALE_OPTIONS: readonly LocaleOption[] = [
@@ -62,8 +78,16 @@ export const CURRENCY_OPTIONS: readonly CurrencyOption[] = [
 
 export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
   'en-US': {
+    documentTitle: 'Price Comparer',
+    mainNavigationAriaLabel: 'Main navigation',
+    brandHomeAriaLabel: 'Price Comparer home',
+    topbarNote: 'Clear price. Trusted store.',
     heroEyebrow: 'Product comparison dashboard',
+    heroTitle: 'Find the best offer, not just the cheapest one.',
     heroSubtitle: 'Search trusted sources and review top ranked offers (up to 10) in one place.',
+    heroSupport: 'Compare price, shipping, delivery time, and store trust signals in a clean, focused experience.',
+    searchIntroTitle: 'Product search',
+    searchIntroDescription: 'Start with a name, model, or category.',
     searchProductLabel: 'Product',
     searchProductPlaceholder: 'iPhone 15 128GB',
     searchCurrencyFilterLabel: 'Currency',
@@ -92,11 +116,44 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     validationTitle: 'Enter at least 2 characters.',
     validationDescription: 'Use a product name that is long enough to search.',
     errorTitle: 'Search failed.',
-    errorDescription: 'Check backend status and configured search sources.'
+    errorDescription: 'Check backend status and configured search sources.',
+    searchSuggestionsAriaLabel: 'Search suggestions',
+    searchSuggestions: ['iPhone 15', 'Gaming laptop', 'Running shoes', 'Bluetooth headphones'],
+    trustGridAriaLabel: 'How comparison works',
+    trustCards: [
+      {
+        icon: '$',
+        title: 'Compare real price',
+        description: 'See the difference between offers without visual noise from marketplaces or coupons.'
+      },
+      {
+        icon: '✓',
+        title: 'Trust the store',
+        description: 'Combine price with reputation signals to avoid risky choices.'
+      },
+      {
+        icon: '↗',
+        title: 'Consider shipping and delivery',
+        description: 'A low price matters less when delivery and extra costs make the purchase worse.'
+      },
+      {
+        icon: '★',
+        title: 'Choose better',
+        description: 'Prioritize the whole offer, not just the lowest number on the shelf.'
+      }
+    ]
   },
   'pt-BR': {
+    documentTitle: 'Price Comparer',
+    mainNavigationAriaLabel: 'Navegação principal',
+    brandHomeAriaLabel: 'Início do Price Comparer',
+    topbarNote: 'Preço claro. Loja confiável.',
     heroEyebrow: 'Painel de comparação de produtos',
+    heroTitle: 'Encontre a melhor oferta, não só a mais barata.',
     heroSubtitle: 'Pesquise em fontes confiáveis e analise as melhores ofertas (até 10) em um só lugar.',
+    heroSupport: 'Compare preço, frete, prazo e sinais de confiabilidade da loja em uma experiência limpa e objetiva.',
+    searchIntroTitle: 'Busca de produto',
+    searchIntroDescription: 'Comece por nome, modelo ou categoria.',
     searchProductLabel: 'Produto',
     searchProductPlaceholder: 'iPhone 15 128GB',
     searchCurrencyFilterLabel: 'Moeda',
@@ -125,11 +182,44 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     validationTitle: 'Digite pelo menos 2 caracteres.',
     validationDescription: 'Use um nome de produto com tamanho suficiente para a busca.',
     errorTitle: 'Falha na busca.',
-    errorDescription: 'Verifique o backend e as fontes de busca configuradas.'
+    errorDescription: 'Verifique o backend e as fontes de busca configuradas.',
+    searchSuggestionsAriaLabel: 'Sugestões de busca',
+    searchSuggestions: ['iPhone 15', 'Notebook gamer', 'Tênis corrida', 'Fone bluetooth'],
+    trustGridAriaLabel: 'Como a comparação funciona',
+    trustCards: [
+      {
+        icon: 'R$',
+        title: 'Compare preço real',
+        description: 'Veja a diferença entre ofertas sem ruído visual de marketplace ou cupom.'
+      },
+      {
+        icon: '✓',
+        title: 'Confie na loja',
+        description: 'Combine preço com sinais de reputação para evitar escolhas arriscadas.'
+      },
+      {
+        icon: '↗',
+        title: 'Considere frete e prazo',
+        description: 'Preço baixo perde força quando entrega e custos extras pioram a compra.'
+      },
+      {
+        icon: '★',
+        title: 'Escolha melhor',
+        description: 'Priorize o conjunto da oferta, não apenas o menor número na vitrine.'
+      }
+    ]
   },
   'es-ES': {
+    documentTitle: 'Price Comparer',
+    mainNavigationAriaLabel: 'Navegación principal',
+    brandHomeAriaLabel: 'Inicio de Price Comparer',
+    topbarNote: 'Precio claro. Tienda confiable.',
     heroEyebrow: 'Panel de comparación de productos',
+    heroTitle: 'Encuentra la mejor oferta, no solo la más barata.',
     heroSubtitle: 'Busca en fuentes confiables y revisa las mejores ofertas (hasta 10) en un solo lugar.',
+    heroSupport: 'Compara precio, envío, plazo y señales de confianza de la tienda en una experiencia limpia y directa.',
+    searchIntroTitle: 'Búsqueda de producto',
+    searchIntroDescription: 'Empieza con un nombre, modelo o categoría.',
     searchProductLabel: 'Producto',
     searchProductPlaceholder: 'iPhone 15 128GB',
     searchCurrencyFilterLabel: 'Moneda',
@@ -158,6 +248,31 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     validationTitle: 'Introduce al menos 2 caracteres.',
     validationDescription: 'Usa un nombre de producto lo suficientemente largo para buscar.',
     errorTitle: 'La búsqueda falló.',
-    errorDescription: 'Revisa el backend y las fuentes de búsqueda configuradas.'
+    errorDescription: 'Revisa el backend y las fuentes de búsqueda configuradas.',
+    searchSuggestionsAriaLabel: 'Sugerencias de búsqueda',
+    searchSuggestions: ['iPhone 15', 'Portátil gaming', 'Zapatillas running', 'Auriculares Bluetooth'],
+    trustGridAriaLabel: 'Cómo funciona la comparación',
+    trustCards: [
+      {
+        icon: '€',
+        title: 'Compara el precio real',
+        description: 'Ve la diferencia entre ofertas sin ruido visual de marketplaces o cupones.'
+      },
+      {
+        icon: '✓',
+        title: 'Confía en la tienda',
+        description: 'Combina el precio con señales de reputación para evitar decisiones arriesgadas.'
+      },
+      {
+        icon: '↗',
+        title: 'Considera envío y plazo',
+        description: 'Un precio bajo pierde fuerza cuando la entrega y los costes extra empeoran la compra.'
+      },
+      {
+        icon: '★',
+        title: 'Elige mejor',
+        description: 'Prioriza el conjunto de la oferta, no solo el número más bajo del escaparate.'
+      }
+    ]
   }
 };

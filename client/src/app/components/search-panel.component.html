@@ -1,7 +1,7 @@
 <form class="search-panel" [formGroup]="form" (ngSubmit)="submitted.emit()">
   <div class="search-panel__intro">
-    <p>Busca de produto</p>
-    <span>Comece por nome, modelo ou categoria.</span>
+    <p>{{ labels.searchIntroTitle }}</p>
+    <span>{{ labels.searchIntroDescription }}</span>
   </div>
 
   <div class="search-panel__controls">

@@ -18,6 +18,8 @@ export class SearchPanelComponent {
     searchAnyCurrency: string;
     searchButton: string;
     searchingButton: string;
+    searchIntroTitle: string;
+    searchIntroDescription: string;
   };
   @Output() submitted = new EventEmitter<void>();
 }
