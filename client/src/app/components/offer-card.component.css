@@ -7,6 +7,7 @@
   grid-template-columns: minmax(0, 1fr) minmax(11rem, max-content);
   gap: var(--wise-space-xl, 1.5rem);
   min-width: 0;
+  align-items: start;
 }
 
 .offer-card__main,
@@ -22,16 +23,21 @@ p {
 }
 
 .offer-card h2 {
-  font-size: clamp(1.05rem, 2vw, 1.25rem);
-  line-height: 1.25;
-  font-weight: 750;
+  font-size: clamp(1.2rem, 2.4vw, 1.55rem);
+  line-height: 1.12;
+  font-weight: 900;
+  letter-spacing: -0.03em;
   color: var(--wise-ink, #0e0f0c);
   overflow-wrap: anywhere;
 }
 
 .offer-card__seller {
+  width: fit-content;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: var(--wise-primary-pale, #e2f6d5);
   color: var(--wise-ink-deep, #163300);
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   font-weight: 800;
   overflow-wrap: anywhere;
 }
@@ -52,9 +58,10 @@ p {
 
 .offer-card__price {
   max-width: 100%;
-  font-size: clamp(1.45rem, 4vw, 2rem);
-  line-height: 1;
+  font-size: clamp(1.8rem, 4vw, 2.55rem);
+  line-height: 0.95;
   font-weight: 900;
+  letter-spacing: -0.05em;
   overflow-wrap: anywhere;
   text-align: right;
 }
@@ -86,10 +93,12 @@ a {
   line-height: 1.5rem;
   text-decoration: none;
   white-space: nowrap;
+  transition: color 140ms ease, transform 140ms ease;
 }
 
 a:hover {
   color: var(--wise-primary-active, #cdffad);
+  transform: translateY(-1px);
 }
 
 a:focus-visible {

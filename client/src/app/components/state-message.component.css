@@ -17,13 +17,15 @@ p {
 strong {
   font-size: clamp(1.1rem, 2vw, 1.35rem);
   line-height: 1.2;
-  font-weight: 850;
+  font-weight: 900;
+  letter-spacing: -0.02em;
   color: var(--wise-ink, #0e0f0c);
   overflow-wrap: anywhere;
 }
 
 p {
   color: var(--wise-body, #454745);
+  max-width: 62ch;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }

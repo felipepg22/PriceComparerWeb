@@ -3,9 +3,9 @@
 }
 
 .metrics-summary {
-  padding: var(--wise-space-lg, 1rem) var(--wise-space-xl, 1.5rem);
+  padding: var(--wise-space-lg, 1rem);
   border-radius: var(--wise-radius-card, 24px);
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.82);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--wise-space-md, 0.75rem);
@@ -13,6 +13,9 @@
 }
 
 .metrics-summary article {
+  padding: var(--wise-space-md, 0.75rem);
+  border-radius: 18px;
+  background: var(--wise-sage, #f4f7ef);
   display: grid;
   gap: var(--wise-space-xs, 0.25rem);
   min-width: 0;
@@ -27,6 +30,7 @@ strong {
   line-height: 1;
   font-size: clamp(1.35rem, 3vw, 1.75rem);
   font-weight: 900;
+  letter-spacing: -0.04em;
   color: var(--wise-ink, #0e0f0c);
 }
 
@@ -39,7 +43,7 @@ span {
 
 @media (max-width: 767px) {
   .metrics-summary {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     padding: var(--wise-space-md, 0.75rem);
     gap: var(--wise-space-sm, 0.5rem);
   }

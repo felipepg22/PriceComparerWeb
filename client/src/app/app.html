@@ -1,9 +1,20 @@
 <main class="page">
+  <header class="topbar" aria-label="Navegação principal">
+    <a class="brand" href="/" aria-label="Price Comparer home">
+      <span class="brand__mark">PC</span>
+      <span>Price Comparer</span>
+    </a>
+    <p class="topbar__note">Preço claro. Loja confiável.</p>
+  </header>
+
   <section class="dashboard-hero">
     <div class="hero-copy">
       <p class="eyebrow">{{ labels().heroEyebrow }}</p>
-      <h1>Price Comparer</h1>
+      <h1>Encontre a melhor oferta, não só a mais barata.</h1>
       <p class="subtitle">{{ labels().heroSubtitle }}</p>
+      <p class="hero-support">
+        Compare preço, frete, prazo e sinais de confiabilidade da loja em uma experiência limpa e objetiva.
+      </p>
       <div class="preferences-row">
         <div class="preferences-field">
           <label for="locale">{{ labels().languageLabel }}</label>
@@ -24,39 +35,72 @@
       </div>
     </div>
 
-    <app-search-panel [form]="form" [loading]="loading()" [labels]="labels()" (submitted)="search()"></app-search-panel>
+    <div class="hero-action-card">
+      <app-search-panel [form]="form" [loading]="loading()" [labels]="labels()" (submitted)="search()"></app-search-panel>
+
+      @if (loading()) {
+        <app-state-message kind="loading" [labels]="labels()"></app-state-message>
+      }
+
+      @if (hasQueryError()) {
+        <app-state-message kind="validation" [labels]="labels()"></app-state-message>
+      }
+
+      @if (apiError()) {
+        <app-state-message kind="error" [labels]="labels()" [message]="apiError() || ''"></app-state-message>
+      }
+
+      @if (result(); as data) {
+        <app-metrics-summary
+          [foundOffers]="summaryFoundOffers()"
+          [candidatePages]="summaryCandidatePages()"
+          [attemptedSources]="summaryAttemptedSources()"
+          [labels]="labels()"
+        ></app-metrics-summary>
+
+        @if (dashboardOffers().length > 0) {
+          <section class="results" [attr.aria-label]="labels().topOffersAriaLabel">
+            @for (offer of dashboardOffers(); track offer.url) {
+              <app-offer-card [offer]="offer"></app-offer-card>
+            }
+          </section>
+        } @else if (hasSearched() && !loading() && !apiError()) {
+          <app-state-message kind="empty" [labels]="labels()"></app-state-message>
+        }
+      } @else if (hasSearched() && !loading() && !apiError()) {
+        <app-state-message kind="empty" [labels]="labels()"></app-state-message>
+      }
+
+      <div class="suggestion-chips" aria-label="Sugestões de busca">
+        <button type="button">iPhone 15</button>
+        <button type="button">Notebook gamer</button>
+        <button type="button">Tênis corrida</button>
+        <button type="button">Fone bluetooth</button>
+      </div>
+    </div>
   </section>
 
-  @if (loading()) {
-    <app-state-message kind="loading" [labels]="labels()"></app-state-message>
-  }
+  <section class="trust-grid" aria-label="Como a comparação funciona">
+    <article>
+      <span class="trust-grid__icon">R$</span>
+      <h2>Compare preço real</h2>
+      <p>Veja a diferença entre ofertas sem ruído visual de marketplace ou cupom.</p>
+    </article>
+    <article>
+      <span class="trust-grid__icon">✓</span>
+      <h2>Confie na loja</h2>
+      <p>Combine preço com sinais de reputação para evitar escolhas arriscadas.</p>
+    </article>
+    <article>
+      <span class="trust-grid__icon">↗</span>
+      <h2>Considere frete e prazo</h2>
+      <p>Preço baixo perde força quando entrega e custos extras pioram a compra.</p>
+    </article>
+    <article>
+      <span class="trust-grid__icon">★</span>
+      <h2>Escolha melhor</h2>
+      <p>Priorize o conjunto da oferta, não apenas o menor número na vitrine.</p>
+    </article>
+  </section>
 
-  @if (hasQueryError()) {
-    <app-state-message kind="validation" [labels]="labels()"></app-state-message>
-  }
-
-  @if (apiError()) {
-    <app-state-message kind="error" [labels]="labels()" [message]="apiError() || ''"></app-state-message>
-  }
-
-  @if (result(); as data) {
-    <app-metrics-summary
-      [foundOffers]="summaryFoundOffers()"
-      [candidatePages]="summaryCandidatePages()"
-      [attemptedSources]="summaryAttemptedSources()"
-      [labels]="labels()"
-    ></app-metrics-summary>
-
-    @if (dashboardOffers().length > 0) {
-      <section class="results" [attr.aria-label]="labels().topOffersAriaLabel">
-        @for (offer of dashboardOffers(); track offer.url) {
-          <app-offer-card [offer]="offer"></app-offer-card>
-        }
-      </section>
-    } @else if (hasSearched() && !loading() && !apiError()) {
-      <app-state-message kind="empty" [labels]="labels()"></app-state-message>
-    }
-  } @else if (hasSearched() && !loading() && !apiError()) {
-    <app-state-message kind="empty" [labels]="labels()"></app-state-message>
-  }
 </main>
