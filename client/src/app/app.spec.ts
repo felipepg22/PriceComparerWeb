@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { App } from './app';
+import type { SupportedLocale } from './models/localization';
 
 function setupStorage(locale?: string, currency?: string): void {
   localStorage.clear();
@@ -24,6 +25,29 @@ function submitSearch(fixture: ReturnType<typeof TestBed.createComponent<App>>, 
   currencySelect.dispatchEvent(new Event('change'));
   fixture.detectChanges();
   form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  fixture.detectChanges();
+}
+
+function localeButton(root: HTMLElement, locale: SupportedLocale): HTMLButtonElement {
+  const button = root.querySelector<HTMLButtonElement>(`button[data-locale="${locale}"]`);
+  if (!button) {
+    throw new Error(`Expected language button for ${locale}`);
+  }
+
+  return button;
+}
+
+function changeLocale(fixture: ReturnType<typeof TestBed.createComponent<App>>, locale: SupportedLocale): void {
+  const root = fixture.nativeElement as HTMLElement;
+  localeButton(root, locale).click();
+  fixture.detectChanges();
+}
+
+function changeProductCurrency(fixture: ReturnType<typeof TestBed.createComponent<App>>, currency: '' | 'BRL' | 'USD' | 'EUR'): void {
+  const root = fixture.nativeElement as HTMLElement;
+  const currencySelect = root.querySelector('#currency') as HTMLSelectElement;
+  currencySelect.value = currency;
+  currencySelect.dispatchEvent(new Event('change'));
   fixture.detectChanges();
 }
 
@@ -57,6 +81,15 @@ describe('App localization and conversion', () => {
     expect(root.textContent).toContain('Painel de comparação de produtos');
     expect(document.documentElement.lang).toBe('pt-BR');
     expect(document.title).toBe('Price Comparer');
+    expect(root.querySelector('select#locale')).toBeNull();
+    expect(root.querySelector('select#displayCurrency')).toBeNull();
+
+    const topbar = root.querySelector('.topbar') as HTMLElement;
+    const activeLocale = localeButton(root, 'pt-BR');
+    expect(topbar.contains(activeLocale)).toBe(true);
+    expect(activeLocale.getAttribute('aria-pressed')).toBe('true');
+    expect(activeLocale.textContent).toContain('🇧🇷');
+    expect(activeLocale.textContent).toContain('Português (Brasil)');
   });
 
   it('falls back to en-US for invalid persisted locale and maps browser base language', () => {
@@ -88,15 +121,12 @@ describe('App localization and conversion', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Product comparison dashboard');
   });
 
-  it('keeps search payload semantics unchanged when language or display currency changes', () => {
+  it('keeps search payload semantics unchanged when language or product currency changes', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
-    const root = fixture.nativeElement as HTMLElement;
 
-    (root.querySelector('#locale') as HTMLSelectElement).value = 'pt-BR';
-    (root.querySelector('#locale') as HTMLSelectElement).dispatchEvent(new Event('change'));
-    (root.querySelector('#displayCurrency') as HTMLSelectElement).value = 'BRL';
-    (root.querySelector('#displayCurrency') as HTMLSelectElement).dispatchEvent(new Event('change'));
+    changeLocale(fixture, 'pt-BR');
+    changeProductCurrency(fixture, 'BRL');
 
     submitSearch(fixture, '  notebook gamer  ', 'USD');
     const req = http.expectOne('/api/products/search');
@@ -119,13 +149,15 @@ describe('App localization and conversion', () => {
     expect(root.textContent).toContain('Confie na loja');
     expect(root.textContent).toContain('Buscar ofertas');
 
-    (root.querySelector('#locale') as HTMLSelectElement).value = 'es-ES';
-    (root.querySelector('#locale') as HTMLSelectElement).dispatchEvent(new Event('change'));
-    fixture.detectChanges();
+    expect(root.querySelector('.language-switcher')?.getAttribute('aria-label')).toBe('Idioma');
+    changeLocale(fixture, 'es-ES');
     root = fixture.nativeElement as HTMLElement;
     expect(document.documentElement.lang).toBe('es-ES');
     expect(root.querySelector('.topbar')?.getAttribute('aria-label')).toBe('Navegación principal');
     expect(root.querySelector('.brand')?.getAttribute('aria-label')).toBe('Inicio de Price Comparer');
+    expect(root.querySelector('.language-switcher')?.getAttribute('aria-label')).toBe('Idioma');
+    expect(localeButton(root, 'es-ES').getAttribute('aria-pressed')).toBe('true');
+    expect(localeButton(root, 'pt-BR').getAttribute('aria-pressed')).toBe('false');
     expect(root.querySelector('.suggestion-chips')?.getAttribute('aria-label')).toBe('Sugerencias de búsqueda');
     expect(root.querySelector('.trust-grid')?.getAttribute('aria-label')).toBe('Cómo funciona la comparación');
     expect(root.textContent).toContain('Encuentra la mejor oferta, no solo la más barata.');
@@ -205,10 +237,7 @@ describe('App localization and conversion', () => {
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
-    const locale = root.querySelector('#locale') as HTMLSelectElement;
-    locale.value = 'pt-BR';
-    locale.dispatchEvent(new Event('change'));
-    fixture.detectChanges();
+    changeLocale(fixture, 'pt-BR');
 
     http.expectNone('/api/products/search');
     expect((root.querySelector('#query') as HTMLInputElement).value).toBe('headphones');
@@ -216,7 +245,7 @@ describe('App localization and conversion', () => {
     expect(root.textContent).toContain('Painel de comparação de produtos');
   });
 
-  it('display currency change preserves source filter and offer order without product search', () => {
+  it('product currency change preserves source filter and offer order without product search', () => {
     setupStorage('en-US', 'USD');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
@@ -261,22 +290,18 @@ describe('App localization and conversion', () => {
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
-    const displayCurrency = root.querySelector('#displayCurrency') as HTMLSelectElement;
-    displayCurrency.value = 'EUR';
-    displayCurrency.dispatchEvent(new Event('change'));
-    fixture.detectChanges();
+    changeProductCurrency(fixture, 'BRL');
     http.expectOne('/api/conversion-rates').flush({
-      targetCurrency: 'EUR',
+      targetCurrency: 'BRL',
       rates: [
-        { sourceCurrency: 'USD', targetCurrency: 'EUR', rate: 0.9, status: 'success' },
-        { sourceCurrency: 'BRL', targetCurrency: 'EUR', rate: 0.18, status: 'success' }
+        { sourceCurrency: 'USD', targetCurrency: 'BRL', rate: 5, status: 'success' }
       ],
       freshness: { fetchedAtUtc: '2026-05-11T12:00:00Z', stale: false, maxAgeMinutes: 60 }
     });
     fixture.detectChanges();
 
     http.expectNone('/api/products/search');
-    expect((root.querySelector('#currency') as HTMLSelectElement).value).toBe('EUR');
+    expect((root.querySelector('#currency') as HTMLSelectElement).value).toBe('BRL');
     const cards = Array.from(root.querySelectorAll('app-offer-card')).map(card => card.textContent ?? '');
     expect(cards[0]).toContain('Offer One');
     expect(cards[1]).toContain('Offer Two');
@@ -312,10 +337,7 @@ describe('App localization and conversion', () => {
     expect(root.textContent).toContain('1,200');
     expect(root.textContent).toContain('95%');
 
-    const locale = root.querySelector('#locale') as HTMLSelectElement;
-    locale.value = 'pt-BR';
-    locale.dispatchEvent(new Event('change'));
-    fixture.detectChanges();
+    changeLocale(fixture, 'pt-BR');
     root = fixture.nativeElement as HTMLElement;
     expect(root.textContent).toContain('1.200');
     expect(root.textContent).toContain('95%');

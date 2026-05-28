@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ReactiveFormsModule, FormGroup } from '@angular/forms';
+import { CurrencyOption } from '../models/localization';
 
 @Component({
   selector: 'app-search-panel',
@@ -21,5 +22,6 @@ export class SearchPanelComponent {
     searchIntroTitle: string;
     searchIntroDescription: string;
   };
+  @Input({ required: true }) currencyOptions!: readonly CurrencyOption[];
   @Output() submitted = new EventEmitter<void>();
 }

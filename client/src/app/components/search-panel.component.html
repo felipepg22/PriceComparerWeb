@@ -20,9 +20,9 @@
       <label for="currency">{{ labels.searchCurrencyFilterLabel }}</label>
       <select id="currency" formControlName="currency">
         <option value="">{{ labels.searchAnyCurrency }}</option>
-        <option value="BRL">BRL</option>
-        <option value="USD">USD</option>
-        <option value="EUR">EUR</option>
+        @for (currency of currencyOptions; track currency.code) {
+          <option [value]="currency.code">{{ currency.label }}</option>
+        }
       </select>
     </div>
   </div>

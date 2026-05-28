@@ -7,6 +7,7 @@ export type SupportedCurrency = typeof SUPPORTED_CURRENCIES[number];
 export interface LocaleOption {
   code: SupportedLocale;
   label: string;
+  flag: string;
 }
 
 export interface CurrencyOption {
@@ -32,7 +33,6 @@ export interface AppTranslations {
   searchButton: string;
   searchingButton: string;
   languageLabel: string;
-  displayCurrencyLabel: string;
   summaryAriaLabel: string;
   foundOffers: string;
   candidatePages: string;
@@ -65,9 +65,9 @@ export interface AppTranslations {
 }
 
 export const LOCALE_OPTIONS: readonly LocaleOption[] = [
-  { code: 'en-US', label: 'English (US)' },
-  { code: 'pt-BR', label: 'Português (Brasil)' },
-  { code: 'es-ES', label: 'Español (España)' }
+  { code: 'en-US', label: 'English (US)', flag: '🇺🇸' },
+  { code: 'pt-BR', label: 'Português (Brasil)', flag: '🇧🇷' },
+  { code: 'es-ES', label: 'Español (España)', flag: '🇪🇸' }
 ];
 
 export const CURRENCY_OPTIONS: readonly CurrencyOption[] = [
@@ -95,7 +95,6 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     searchButton: 'Search offers',
     searchingButton: 'Searching...',
     languageLabel: 'Language',
-    displayCurrencyLabel: 'Display currency',
     summaryAriaLabel: 'Search summary',
     foundOffers: 'found offers',
     candidatePages: 'candidate pages',
@@ -161,7 +160,6 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     searchButton: 'Buscar ofertas',
     searchingButton: 'Buscando...',
     languageLabel: 'Idioma',
-    displayCurrencyLabel: 'Moeda de exibição',
     summaryAriaLabel: 'Resumo da busca',
     foundOffers: 'ofertas encontradas',
     candidatePages: 'páginas candidatas',
@@ -227,7 +225,6 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     searchButton: 'Buscar ofertas',
     searchingButton: 'Buscando...',
     languageLabel: 'Idioma',
-    displayCurrencyLabel: 'Moneda de visualización',
     summaryAriaLabel: 'Resumen de búsqueda',
     foundOffers: 'ofertas encontradas',
     candidatePages: 'páginas candidatas',

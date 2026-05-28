@@ -4,7 +4,24 @@
       <span class="brand__mark">PC</span>
       <span>Price Comparer</span>
     </a>
-    <p class="topbar__note">{{ labels().topbarNote }}</p>
+    <div class="topbar__actions">
+      <p class="topbar__note">{{ labels().topbarNote }}</p>
+      <div class="language-switcher" role="group" [attr.aria-label]="labels().languageLabel">
+        @for (locale of localeOptions; track locale.code) {
+          <button
+            type="button"
+            class="language-switcher__option"
+            [class.language-switcher__option--active]="preferences.activeLocale() === locale.code"
+            [attr.aria-pressed]="preferences.activeLocale() === locale.code"
+            [attr.data-locale]="locale.code"
+            (click)="onLocaleChange(locale.code)"
+          >
+            <span class="language-switcher__flag" aria-hidden="true">{{ locale.flag }}</span>
+            <span>{{ locale.label }}</span>
+          </button>
+        }
+      </div>
+    </div>
   </header>
 
   <section class="dashboard-hero">
@@ -15,28 +32,10 @@
       <p class="hero-support">
         {{ labels().heroSupport }}
       </p>
-      <div class="preferences-row">
-        <div class="preferences-field">
-          <label for="locale">{{ labels().languageLabel }}</label>
-          <select id="locale" [value]="preferences.activeLocale()" (change)="onLocaleChange($any($event.target).value)">
-            @for (locale of localeOptions; track locale.code) {
-              <option [value]="locale.code">{{ locale.label }}</option>
-            }
-          </select>
-        </div>
-        <div class="preferences-field">
-          <label for="displayCurrency">{{ labels().displayCurrencyLabel }}</label>
-          <select id="displayCurrency" [value]="preferences.displayCurrency()" (change)="onDisplayCurrencyChange($any($event.target).value)">
-            @for (currency of currencyOptions; track currency.code) {
-              <option [value]="currency.code">{{ currency.label }}</option>
-            }
-          </select>
-        </div>
-      </div>
     </div>
 
     <div class="hero-action-card">
-      <app-search-panel [form]="form" [loading]="loading()" [labels]="labels()" (submitted)="search()"></app-search-panel>
+      <app-search-panel [form]="form" [loading]="loading()" [labels]="labels()" [currencyOptions]="currencyOptions" (submitted)="search()"></app-search-panel>
 
       @if (loading()) {
         <app-state-message kind="loading" [labels]="labels()"></app-state-message>

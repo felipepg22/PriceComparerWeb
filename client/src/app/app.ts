@@ -51,6 +51,17 @@ export class App {
     currency: new FormControl('', { nonNullable: true })
   });
 
+  constructor() {
+    this.form.controls.currency.valueChanges.subscribe(currency => {
+      if (!this.isSupportedCurrency(currency) || currency === this.preferences.displayCurrency()) {
+        return;
+      }
+
+      this.preferences.setDisplayCurrency(currency);
+      this.refreshConversionRates();
+    });
+  }
+
   protected search(): void {
     if (this.form.invalid || this.loading()) {
       this.form.markAllAsTouched();
@@ -87,11 +98,6 @@ export class App {
 
   protected onLocaleChange(locale: string): void {
     this.preferences.setLocale(locale as SupportedLocale);
-  }
-
-  protected onDisplayCurrencyChange(currency: string): void {
-    this.preferences.setDisplayCurrency(currency as SupportedCurrency);
-    this.refreshConversionRates();
   }
 
   protected hasQueryError(): boolean {
@@ -179,5 +185,9 @@ export class App {
 
   protected summaryAttemptedSources(): string {
     return this.preferences.formatCount(this.result()?.attemptedSourceCount ?? 0);
+  }
+
+  private isSupportedCurrency(currency: string): currency is SupportedCurrency {
+    return this.currencyOptions.some(option => option.code === currency);
   }
 }
