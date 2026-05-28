@@ -8,6 +8,7 @@ using PriceComparerWeb.Api.Services;
 
 await ProductSearchServiceAttemptsAllCandidatesWhenConcurrencyIsLower();
 await ProductSearchServiceClampsInvalidConcurrencyToOne();
+await ProductSearchServiceExcludesLowPriceOutliersWithinSameCurrency();
 await SearXngProviderHonorsMaxCandidates();
 
 Console.WriteLine("Product search configuration regression checks passed.");
@@ -70,12 +71,86 @@ static async Task SearXngProviderHonorsMaxCandidates()
     AssertEqual(5, candidates.Count, "Provider should use MaxCandidates as the candidate cap.");
 }
 
+static async Task ProductSearchServiceExcludesLowPriceOutliersWithinSameCurrency()
+{
+    var candidates = new[]
+    {
+        new ProductSearchCandidate("https://store.example/usd-low", "test", "USD Low"),
+        new ProductSearchCandidate("https://store.example/usd-mid", "test", "USD Mid"),
+        new ProductSearchCandidate("https://store.example/usd-high", "test", "USD High"),
+        new ProductSearchCandidate("https://store.example/brl-normal", "test", "BRL Normal"),
+        new ProductSearchCandidate("https://store.example/brl-high", "test", "BRL High")
+    };
+
+    var offersByUrl = new Dictionary<string, ProductOffer>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["https://store.example/usd-low"] = NewOffer("USD Low", 30m, "USD", "https://store.example/usd-low"),
+        ["https://store.example/usd-mid"] = NewOffer("USD Mid", 90m, "USD", "https://store.example/usd-mid"),
+        ["https://store.example/usd-high"] = NewOffer("USD High", 110m, "USD", "https://store.example/usd-high"),
+        ["https://store.example/brl-normal"] = NewOffer("BRL Normal", 1000m, "BRL", "https://store.example/brl-normal"),
+        ["https://store.example/brl-high"] = NewOffer("BRL High", 1200m, "BRL", "https://store.example/brl-high")
+    };
+
+    var service = new ProductSearchService(
+        Options.Create(new ProductSearchOptions { MaxCandidates = 10, MaxConcurrency = 5 }),
+        new FixedProductSearchProvider(candidates),
+        new TrackingPageScraper(),
+        new OfferMapPriceExtractor(offersByUrl));
+
+    var response = await service.SearchAsync(new ProductSearchRequest("phone", null), CancellationToken.None);
+
+    AssertTrue(
+        response.Offers.All(offer => !string.Equals(offer.Url, "https://store.example/usd-low", StringComparison.OrdinalIgnoreCase)),
+        "Low USD outlier should be excluded from offers.");
+    AssertTrue(
+        response.Offers.Any(offer => string.Equals(offer.Url, "https://store.example/usd-mid", StringComparison.OrdinalIgnoreCase)),
+        "USD offer above/equal cutoff should be retained.");
+    AssertTrue(
+        response.Offers.Any(offer => string.Equals(offer.Url, "https://store.example/brl-normal", StringComparison.OrdinalIgnoreCase)),
+        "BRL offers should be evaluated in their own currency group and retained here.");
+
+    var lowAttempt = response.AttemptedSources.FirstOrDefault(source => string.Equals(source.Url, "https://store.example/usd-low", StringComparison.OrdinalIgnoreCase));
+    AssertTrue(lowAttempt is not null, "Low outlier attempted source should be present.");
+    AssertEqual("excluded", lowAttempt!.Status, "Low outlier attempted source should be marked as excluded.");
+    AssertTrue(
+        string.Equals(lowAttempt.Reason, "Price is below 50% of the average USD offer price.", StringComparison.Ordinal),
+        "Low outlier exclusion reason should be explicit and deterministic.");
+
+    AssertEqual(candidates.Length, response.CandidateCount, "CandidateCount should remain unchanged after outlier filtering.");
+    AssertEqual(candidates.Length, response.AttemptedSourceCount, "AttemptedSourceCount should remain unchanged after outlier filtering.");
+    AssertTrue(
+        response.Warnings.Any(warning => warning.Contains("Price is below 50% of the average USD offer price.", StringComparison.Ordinal)),
+        "Warnings should include low outlier exclusion reason.");
+}
+
 static void AssertEqual<T>(T expected, T actual, string message)
 {
     if (!EqualityComparer<T>.Default.Equals(expected, actual))
     {
         throw new InvalidOperationException($"{message} Expected {expected}, got {actual}.");
     }
+}
+
+static void AssertTrue(bool condition, string message)
+{
+    if (!condition)
+    {
+        throw new InvalidOperationException(message);
+    }
+}
+
+static ProductOffer NewOffer(string title, decimal priceAmount, string currency, string url)
+{
+    return new ProductOffer(
+        Title: title,
+        PriceAmount: priceAmount,
+        Currency: currency,
+        Seller: "store.example",
+        Url: url,
+        SourceName: "test",
+        ExtractionMethod: "structured-data",
+        Confidence: 0.95,
+        FetchedAtUtc: DateTime.UtcNow);
 }
 
 sealed class FixedProductSearchProvider(IReadOnlyList<ProductSearchCandidate> candidates) : IProductSearchProvider
@@ -135,6 +210,15 @@ sealed class NoOfferPriceExtractor : IPriceExtractor
     {
         exclusionReason = "No test offer.";
         return null;
+    }
+}
+
+sealed class OfferMapPriceExtractor(IReadOnlyDictionary<string, ProductOffer> offersByUrl) : IPriceExtractor
+{
+    public ProductOffer? ExtractOffer(PageScrapeDocument page, ProductSearchCandidate candidate, string? requestedCurrency, out string? exclusionReason)
+    {
+        exclusionReason = null;
+        return offersByUrl.TryGetValue(candidate.Url, out var offer) ? offer : null;
     }
 }
 

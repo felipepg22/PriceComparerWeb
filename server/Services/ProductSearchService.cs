@@ -16,6 +16,8 @@ public sealed class ProductSearchService(
     IPriceExtractor priceExtractor) : IProductSearchService
 {
     private const int MaxRankedOffers = 10;
+    private const decimal LowPriceOutlierThreshold = 0.5m;
+    private const int MinOffersPerCurrencyForOutlierFilter = 2;
 
     private static readonly string[] LowValueHosts =
     [
@@ -52,6 +54,18 @@ public sealed class ProductSearchService(
             }
         }
 
+        var lowPriceOutlierByUrl = FindLowPriceOutliersByUrl(offers);
+        if (lowPriceOutlierByUrl.Count > 0)
+        {
+            offers = offers
+                .Where(offer => !lowPriceOutlierByUrl.ContainsKey(offer.Url))
+                .ToList();
+
+            attemptedSources = attemptedSources
+                .Select(source => ToLowPriceExcludedSource(source, lowPriceOutlierByUrl))
+                .ToList();
+        }
+
         var orderedOffers = offers
             .Select(offer => new RankedOffer(offer, ScoreReliability(offer)))
             .OrderByDescending(ranked => ranked.ReliabilityScore)
@@ -80,6 +94,47 @@ public sealed class ProductSearchService(
             Offers: orderedOffers,
             AttemptedSources: attemptedSources,
             Warnings: warnings);
+    }
+
+    private static Dictionary<string, string> FindLowPriceOutliersByUrl(IReadOnlyList<ProductOffer> offers)
+    {
+        var excluded = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var group in offers.GroupBy(offer => offer.Currency, StringComparer.OrdinalIgnoreCase))
+        {
+            var currencyOffers = group.ToArray();
+            if (currencyOffers.Length < MinOffersPerCurrencyForOutlierFilter)
+            {
+                continue;
+            }
+
+            var average = currencyOffers.Average(offer => offer.PriceAmount);
+            var threshold = average * LowPriceOutlierThreshold;
+
+            foreach (var offer in currencyOffers)
+            {
+                if (offer.PriceAmount < threshold)
+                {
+                    excluded[offer.Url] = $"Price is below {(int)(LowPriceOutlierThreshold * 100m)}% of the average {group.Key} offer price.";
+                }
+            }
+        }
+
+        return excluded;
+    }
+
+    private static AttemptedSource ToLowPriceExcludedSource(AttemptedSource source, Dictionary<string, string> outlierByUrl)
+    {
+        if (source.Status != "success" || !outlierByUrl.TryGetValue(source.Url, out var reason))
+        {
+            return source;
+        }
+
+        return source with
+        {
+            Status = "excluded",
+            Reason = reason
+        };
     }
 
     private static double ScoreReliability(ProductOffer offer)
