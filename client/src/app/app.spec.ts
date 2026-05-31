@@ -2,7 +2,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { App } from './app';
-import type { SupportedLocale } from './models/localization';
+import type { SupportedCurrency, SupportedLocale } from './models/localization';
+
+type SearchCurrency = SupportedCurrency | '';
 
 function setupStorage(locale?: string, currency?: string): void {
   localStorage.clear();
@@ -14,15 +16,13 @@ function setupStorage(locale?: string, currency?: string): void {
   }
 }
 
-function submitSearch(fixture: ReturnType<typeof TestBed.createComponent<App>>, query: string, sourceCurrency = ''): void {
+function submitSearch(fixture: ReturnType<typeof TestBed.createComponent<App>>, query: string, sourceCurrency: SearchCurrency = ''): void {
   const root = fixture.nativeElement as HTMLElement;
   const queryInput = root.querySelector('#query') as HTMLInputElement;
-  const currencySelect = root.querySelector('#currency') as HTMLSelectElement;
   const form = root.querySelector('form') as HTMLFormElement;
   queryInput.value = query;
   queryInput.dispatchEvent(new Event('input'));
-  currencySelect.value = sourceCurrency;
-  currencySelect.dispatchEvent(new Event('change'));
+  changeSearchCurrency(fixture, sourceCurrency);
   fixture.detectChanges();
   form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
   fixture.detectChanges();
@@ -43,11 +43,18 @@ function changeLocale(fixture: ReturnType<typeof TestBed.createComponent<App>>, 
   fixture.detectChanges();
 }
 
-function changeProductCurrency(fixture: ReturnType<typeof TestBed.createComponent<App>>, currency: '' | 'BRL' | 'USD' | 'EUR'): void {
+function changeProductCurrency(fixture: ReturnType<typeof TestBed.createComponent<App>>, currency: SearchCurrency): void {
+  changeSearchCurrency(fixture, currency);
+}
+
+function changeSearchCurrency(fixture: ReturnType<typeof TestBed.createComponent<App>>, currency: SearchCurrency): void {
   const root = fixture.nativeElement as HTMLElement;
-  const currencySelect = root.querySelector('#currency') as HTMLSelectElement;
-  currencySelect.value = currency;
-  currencySelect.dispatchEvent(new Event('change'));
+  const input = root.querySelector<HTMLInputElement>(`input[name="currency"][data-currency="${currency}"]`);
+  if (!input) {
+    throw new Error(`Expected currency input for ${currency || 'any currency'}`);
+  }
+
+  input.click();
   fixture.detectChanges();
 }
 
@@ -83,6 +90,8 @@ describe('App localization and conversion', () => {
     expect(document.title).toBe('Price Comparer');
     expect(root.querySelector('select#locale')).toBeNull();
     expect(root.querySelector('select#displayCurrency')).toBeNull();
+    expect(root.querySelector('select#currency')).toBeNull();
+    expect(root.querySelector('#currency')?.getAttribute('role')).toBe('radiogroup');
 
     const topbar = root.querySelector('.topbar') as HTMLElement;
     const activeLocale = localeButton(root, 'pt-BR');
@@ -301,7 +310,7 @@ describe('App localization and conversion', () => {
     fixture.detectChanges();
 
     http.expectNone('/api/products/search');
-    expect((root.querySelector('#currency') as HTMLSelectElement).value).toBe('BRL');
+    expect(root.querySelector<HTMLInputElement>('input[name="currency"]:checked')?.dataset['currency']).toBe('BRL');
     const cards = Array.from(root.querySelectorAll('app-offer-card')).map(card => card.textContent ?? '');
     expect(cards[0]).toContain('Offer One');
     expect(cards[1]).toContain('Offer Two');

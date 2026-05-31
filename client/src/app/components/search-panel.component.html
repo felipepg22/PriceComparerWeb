@@ -6,7 +6,7 @@
 
   <div class="search-panel__controls">
     <div class="search-panel__field search-panel__field--query">
-      <label for="query">{{ labels.searchProductLabel }}</label>
+      <label class="search-panel__label" for="query">{{ labels.searchProductLabel }}</label>
       <input
         id="query"
         type="search"
@@ -16,14 +16,20 @@
       />
     </div>
 
-    <div class="search-panel__field">
-      <label for="currency">{{ labels.searchCurrencyFilterLabel }}</label>
-      <select id="currency" formControlName="currency">
-        <option value="">{{ labels.searchAnyCurrency }}</option>
+    <div class="search-panel__field search-panel__field--currency">
+      <span id="currency-label" class="search-panel__label">{{ labels.searchCurrencyFilterLabel }}</span>
+      <div id="currency" class="currency-picker" role="radiogroup" aria-labelledby="currency-label">
+        <label class="currency-picker__option currency-picker__option--any">
+          <input class="currency-picker__input" type="radio" name="currency" formControlName="currency" value="" data-currency="" />
+          <span class="currency-picker__content">{{ labels.searchAnyCurrency }}</span>
+        </label>
         @for (currency of currencyOptions; track currency.code) {
-          <option [value]="currency.code">{{ currency.label }}</option>
+          <label class="currency-picker__option">
+            <input class="currency-picker__input" type="radio" name="currency" formControlName="currency" [value]="currency.code" [attr.data-currency]="currency.code" />
+            <span class="currency-picker__content">{{ currency.label }}</span>
+          </label>
         }
-      </select>
+      </div>
     </div>
 
     <button type="submit" [disabled]="loading">

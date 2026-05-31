@@ -36,7 +36,7 @@
 
 .search-panel__controls {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(7.75rem, 9rem) max-content;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem) max-content;
   gap: var(--wise-space-md, 0.75rem);
   align-items: end;
 }
@@ -47,7 +47,7 @@
   min-width: 0;
 }
 
-label {
+.search-panel__label {
   color: var(--wise-muted, #687368);
   font-size: 0.78rem;
   font-weight: 720;
@@ -55,7 +55,6 @@ label {
 }
 
 input,
-select,
 button {
   min-width: 0;
   min-height: 2.9rem;
@@ -66,16 +65,17 @@ button {
   line-height: 1.5rem;
 }
 
-input,
-select {
+input {
   width: 100%;
+}
+
+input {
   background: var(--wise-panel, #fafbf8);
   padding: var(--wise-space-sm, 0.5rem) var(--wise-space-md, 0.75rem);
   transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
 }
 
-input:hover,
-select:hover {
+input:hover {
   border-color: rgba(18, 21, 17, 0.28);
   background: var(--wise-canvas, #ffffff);
 }
@@ -87,6 +87,81 @@ input {
 input::placeholder {
   color: var(--wise-muted, #687368);
   opacity: 1;
+}
+
+.currency-picker {
+  min-width: 0;
+  min-height: 2.9rem;
+  padding: 0.25rem;
+  border: 1px solid var(--wise-border-strong);
+  border-radius: var(--wise-radius-control);
+  background: var(--wise-sage);
+  display: grid;
+  grid-template-columns: minmax(8.25rem, 1.8fr) repeat(3, minmax(3rem, 1fr));
+  gap: 0.1875rem;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.currency-picker:hover {
+  border-color: rgba(18, 21, 17, 0.28);
+  background: var(--wise-panel);
+}
+
+.currency-picker__option {
+  position: relative;
+  min-width: 0;
+}
+
+.currency-picker__input {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.currency-picker__content {
+  min-width: 0;
+  min-height: 2.35rem;
+  border-radius: 0.5rem;
+  color: var(--wise-body);
+  display: grid;
+  place-items: center;
+  padding: 0 var(--wise-space-sm);
+  font-size: 0.83rem;
+  font-weight: 760;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background-color 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+.currency-picker__option:hover .currency-picker__content {
+  background: rgba(255, 255, 255, 0.58);
+  color: var(--wise-ink);
+}
+
+.currency-picker__input:checked + .currency-picker__content {
+  background: var(--wise-canvas);
+  color: var(--wise-ink);
+  box-shadow: 0 1px 2px rgba(18, 21, 17, 0.08);
+}
+
+.currency-picker__option--any .currency-picker__content {
+  white-space: normal;
+}
+
+.currency-picker__input:focus-visible + .currency-picker__content {
+  box-shadow: var(--wise-focus);
+}
+
+.currency-picker__input:active + .currency-picker__content {
+  transform: translateY(1px);
 }
 
 button {
@@ -117,10 +192,23 @@ button:disabled {
 }
 
 input:focus-visible,
-select:focus-visible,
 button:focus-visible {
   outline: none;
   box-shadow: var(--wise-focus, 0 0 0 3px #9fe870);
+}
+
+@media (max-width: 1040px) {
+  .search-panel__controls {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+
+  .search-panel__field--query {
+    grid-column: 1 / -1;
+  }
+
+  .search-panel__field--currency {
+    min-width: min(22rem, 100%);
+  }
 }
 
 @media (max-width: 767px) {
@@ -128,8 +216,14 @@ button:focus-visible {
   .search-panel__controls {
     grid-template-columns: 1fr;
   }
+}
 
-  button {
-    width: 100%;
+@media (max-width: 420px) {
+  .currency-picker {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .currency-picker__option--any {
+    grid-column: 1 / -1;
   }
 }
