@@ -15,25 +15,26 @@ p {
 }
 
 strong {
-  font-size: 1.08rem;
+  font-size: 1rem;
   line-height: 1.2;
-  font-weight: 850;
-  letter-spacing: -0.01em;
-  color: var(--wise-ink, #0e0f0c);
+  font-weight: 780;
+  letter-spacing: 0;
+  color: var(--wise-ink, #121511);
   overflow-wrap: anywhere;
 }
 
 p {
-  color: var(--wise-body, #454745);
+  color: var(--wise-body, #384238);
   max-width: 62ch;
+  font-size: 0.9rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
 
 .state-message[data-kind='error'] strong {
-  color: var(--wise-negative, #d03238);
+  color: var(--wise-negative, #b3262e);
 }
 
 .state-message[data-kind='validation'] strong {
-  color: var(--wise-warning-content, #4a3b1c);
+  color: var(--wise-warning-content, #5a4319);
 }

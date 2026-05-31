@@ -29,6 +29,7 @@
       <p class="eyebrow">{{ labels().heroEyebrow }}</p>
       <h1>{{ labels().heroTitle }}</h1>
       <p class="subtitle">{{ labels().heroSubtitle }}</p>
+      <p class="hero-support">{{ labels().heroSupport }}</p>
     </div>
 
     <div class="hero-action-card">
@@ -47,28 +48,32 @@
       }
 
       @if (result(); as data) {
-        <app-metrics-summary
-          [foundOffers]="summaryFoundOffers()"
-          [candidatePages]="summaryCandidatePages()"
-          [attemptedSources]="summaryAttemptedSources()"
-          [labels]="labels()"
-        ></app-metrics-summary>
-        <p class="result-help">
-          {{ labels().resultHelpExtraction }} {{ labels().resultHelpFreshness }}
-        </p>
-        @if (conversionLoading()) {
-          <p class="conversion-loading">{{ labels().conversionLoadingLabel }}</p>
-        }
-
-        @if (dashboardOffers().length > 0) {
-          <section class="results" [attr.aria-label]="labels().topOffersAriaLabel">
-            @for (offer of dashboardOffers(); track offer.url) {
-              <app-offer-card [offer]="offer"></app-offer-card>
+        <section class="results-panel">
+          <div class="results-panel__summary">
+            <app-metrics-summary
+              [foundOffers]="summaryFoundOffers()"
+              [candidatePages]="summaryCandidatePages()"
+              [attemptedSources]="summaryAttemptedSources()"
+              [labels]="labels()"
+            ></app-metrics-summary>
+            <p class="result-help">
+              {{ labels().resultHelpExtraction }} {{ labels().resultHelpFreshness }}
+            </p>
+            @if (conversionLoading()) {
+              <p class="conversion-loading">{{ labels().conversionLoadingLabel }}</p>
             }
-          </section>
-        } @else if (hasSearched() && !loading() && !apiError()) {
-          <app-state-message kind="empty" [labels]="labels()"></app-state-message>
-        }
+          </div>
+
+          @if (dashboardOffers().length > 0) {
+            <section class="results" [attr.aria-label]="labels().topOffersAriaLabel">
+              @for (offer of dashboardOffers(); track offer.url) {
+                <app-offer-card [offer]="offer"></app-offer-card>
+              }
+            </section>
+          } @else if (hasSearched() && !loading() && !apiError()) {
+            <app-state-message kind="empty" [labels]="labels()"></app-state-message>
+          }
+        </section>
       } @else if (hasSearched() && !loading() && !apiError()) {
         <app-state-message kind="empty" [labels]="labels()"></app-state-message>
       }

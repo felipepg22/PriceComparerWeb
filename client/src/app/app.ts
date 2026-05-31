@@ -43,7 +43,7 @@ export class App {
   protected readonly dashboardOffers = computed(() => this.result()?.offers.map(offer => this.dashboardOffer(offer)) ?? []);
   protected readonly localeOptions = this.preferences.localeOptions;
   protected readonly currencyOptions = this.preferences.currencyOptions;
-  protected readonly trustHighlights = computed(() => this.labels().trustCards.slice(0, 2));
+  protected readonly trustHighlights = computed(() => this.labels().trustCards);
 
   protected readonly form = new FormGroup({
     query: new FormControl('', {

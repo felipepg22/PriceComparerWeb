@@ -6,23 +6,20 @@
   overflow: hidden;
   border: 1px solid var(--wise-border, #d8dfd2);
   border-radius: var(--wise-radius-control, 12px);
-  background: var(--wise-canvas, #ffffff);
+  background: var(--wise-border, #d8dfd2);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0;
+  gap: 1px;
   min-width: 0;
 }
 
 .metrics-summary article {
   padding: var(--wise-space-md, 0.75rem);
-  border-right: 1px solid var(--wise-border, #d8dfd2);
+  border-right: 0;
+  background: var(--wise-canvas, #ffffff);
   display: grid;
   gap: var(--wise-space-xs, 0.25rem);
   min-width: 0;
-}
-
-.metrics-summary article:last-child {
-  border-right: 0;
 }
 
 strong,
@@ -32,15 +29,15 @@ span {
 
 strong {
   line-height: 1;
-  font-size: 1.45rem;
-  font-weight: 900;
-  letter-spacing: -0.03em;
-  color: var(--wise-ink, #0e0f0c);
+  font-size: 1.12rem;
+  font-weight: 780;
+  letter-spacing: 0;
+  color: var(--wise-ink, #121511);
 }
 
 span {
-  color: var(--wise-body, #454745);
-  font-size: 0.875rem;
+  color: var(--wise-muted, #687368);
+  font-size: 0.78rem;
   line-height: 1.25rem;
   overflow-wrap: anywhere;
 }
@@ -52,11 +49,6 @@ span {
 
   .metrics-summary article {
     border-right: 0;
-    border-bottom: 1px solid var(--wise-border, #d8dfd2);
-  }
-
-  .metrics-summary article:last-child {
-    border-bottom: 0;
   }
 
   span {
