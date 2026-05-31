@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "tsOwYsMWicw=",
+  "success": true,
+  "projectFilePath": "/Users/felipepg/projetos/PriceComparerWeb/tests/PriceComparerWeb.Api.Tests/PriceComparerWeb.Api.Tests.csproj",
+  "expectedPackageFiles": [
+    "/Users/felipepg/.nuget/packages/anglesharp/1.2.0/anglesharp.1.2.0.nupkg.sha512",
+    "/Users/felipepg/.nuget/packages/microsoft.aspnetcore.openapi/10.0.2/microsoft.aspnetcore.openapi.10.0.2.nupkg.sha512",
+    "/Users/felipepg/.nuget/packages/microsoft.openapi/2.0.0/microsoft.openapi.2.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
