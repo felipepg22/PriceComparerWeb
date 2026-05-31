@@ -37,11 +37,13 @@ export class App {
   protected readonly hasSearched = signal(false);
   protected readonly conversionRates = signal<Map<SupportedCurrency, number>>(new Map());
   protected readonly conversionFreshness = signal<string | null>(null);
+  protected readonly conversionLoading = signal(false);
   protected readonly conversionUnavailable = signal(false);
   protected readonly labels = computed(() => this.preferences.translations());
   protected readonly dashboardOffers = computed(() => this.result()?.offers.map(offer => this.dashboardOffer(offer)) ?? []);
   protected readonly localeOptions = this.preferences.localeOptions;
   protected readonly currencyOptions = this.preferences.currencyOptions;
+  protected readonly trustHighlights = computed(() => this.labels().trustCards.slice(0, 2));
 
   protected readonly form = new FormGroup({
     query: new FormControl('', {
@@ -74,6 +76,7 @@ export class App {
     this.conversionRates.set(new Map());
     this.conversionUnavailable.set(false);
     this.conversionFreshness.set(null);
+    this.conversionLoading.set(false);
     this.hasSearched.set(true);
 
     const currency = this.form.controls.currency.value;
@@ -100,6 +103,12 @@ export class App {
     this.preferences.setLocale(locale as SupportedLocale);
   }
 
+  protected applySuggestion(suggestion: string): void {
+    this.form.controls.query.setValue(suggestion);
+    this.form.controls.query.markAsTouched();
+    this.search();
+  }
+
   protected hasQueryError(): boolean {
     const control = this.form.controls.query;
     return control.touched && control.invalid;
@@ -119,9 +128,11 @@ export class App {
       this.conversionRates.set(new Map());
       this.conversionUnavailable.set(false);
       this.conversionFreshness.set(null);
+      this.conversionLoading.set(false);
       return;
     }
 
+    this.conversionLoading.set(true);
     this.http.post<ConversionRateResponse>('/api/conversion-rates', {
       sourceCurrencies,
       targetCurrency
@@ -137,10 +148,12 @@ export class App {
         this.conversionRates.set(rates);
         this.conversionFreshness.set(conversion.freshness.fetchedAtUtc);
         this.conversionUnavailable.set(rates.size === 0);
+        this.conversionLoading.set(false);
       },
       error: () => {
         this.conversionRates.set(new Map());
         this.conversionUnavailable.set(true);
+        this.conversionLoading.set(false);
       }
     });
   }
@@ -162,6 +175,8 @@ export class App {
       displayPrice: this.preferences.formatCurrency(displayAmount, displayCurrency),
       originalPrice: this.preferences.formatCurrency(offer.priceAmount, offer.currency),
       sellerLabel: this.sellerLabel(offer),
+      sourceLabel: labels.offerSourceLabel,
+      extractionLabel: labels.offerExtractionLabel,
       sourceName: offer.sourceName,
       extractionMethod: offer.extractionMethod,
       confidencePercent: this.preferences.formatConfidence(offer.confidence),

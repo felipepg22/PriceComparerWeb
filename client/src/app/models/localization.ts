@@ -38,6 +38,11 @@ export interface AppTranslations {
   candidatePages: string;
   attemptedSources: string;
   topOffersAriaLabel: string;
+  resultHelpExtraction: string;
+  resultHelpFreshness: string;
+  conversionLoadingLabel: string;
+  offerSourceLabel: string;
+  offerExtractionLabel: string;
   openOffer: string;
   sellerUnknownFallback: string;
   conversionUnavailable: string;
@@ -100,6 +105,11 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     candidatePages: 'candidate pages',
     attemptedSources: 'attempted sources',
     topOffersAriaLabel: 'Top ranked offers',
+    resultHelpExtraction: 'Extraction shows how the price was read from each page.',
+    resultHelpFreshness: 'Rate freshness shows when currency conversion data was last updated.',
+    conversionLoadingLabel: 'Updating conversion rates...',
+    offerSourceLabel: 'Source',
+    offerExtractionLabel: 'Extraction',
     openOffer: 'Open offer',
     sellerUnknownFallback: 'Unknown seller',
     conversionUnavailable: 'Conversion unavailable',
@@ -165,6 +175,11 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     candidatePages: 'páginas candidatas',
     attemptedSources: 'fontes tentadas',
     topOffersAriaLabel: 'Ofertas melhor ranqueadas',
+    resultHelpExtraction: 'Extração mostra como o preço foi lido em cada página.',
+    resultHelpFreshness: 'Atualização da cotação mostra quando os dados de conversão foram atualizados.',
+    conversionLoadingLabel: 'Atualizando cotações...',
+    offerSourceLabel: 'Fonte',
+    offerExtractionLabel: 'Extração',
     openOffer: 'Abrir oferta',
     sellerUnknownFallback: 'Vendedor não informado',
     conversionUnavailable: 'Conversão indisponível',
@@ -230,6 +245,11 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     candidatePages: 'páginas candidatas',
     attemptedSources: 'fuentes intentadas',
     topOffersAriaLabel: 'Ofertas mejor clasificadas',
+    resultHelpExtraction: 'Extracción indica cómo se leyó el precio en cada página.',
+    resultHelpFreshness: 'Actualización del tipo de cambio indica cuándo se actualizaron los datos de conversión.',
+    conversionLoadingLabel: 'Actualizando tipos de cambio...',
+    offerSourceLabel: 'Fuente',
+    offerExtractionLabel: 'Extracción',
     openOffer: 'Abrir oferta',
     sellerUnknownFallback: 'Vendedor no informado',
     conversionUnavailable: 'Conversión no disponible',

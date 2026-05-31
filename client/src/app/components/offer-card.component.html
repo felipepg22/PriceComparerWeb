@@ -3,8 +3,9 @@
     <p class="offer-card__seller">{{ offer.sellerLabel }}</p>
     <h2>{{ offer.title }}</h2>
     <p class="offer-card__meta">
-      <span>{{ offer.sourceName }}</span>
-      <span>{{ offer.extractionMethod }}</span>
+      <span [attr.title]="offer.sourceLabel">{{ offer.sourceName }}</span>
+      <span aria-hidden="true">•</span>
+      <span [attr.title]="offer.extractionLabel">{{ offer.extractionMethod }}</span>
     </p>
   </div>
 

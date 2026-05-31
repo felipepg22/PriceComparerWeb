@@ -36,6 +36,8 @@ export interface DashboardOffer {
   displayPrice: string;
   originalPrice: string;
   sellerLabel: string;
+  sourceLabel: string;
+  extractionLabel: string;
   sourceName: string;
   extractionMethod: string;
   confidencePercent: string;

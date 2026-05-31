@@ -29,9 +29,6 @@
       <p class="eyebrow">{{ labels().heroEyebrow }}</p>
       <h1>{{ labels().heroTitle }}</h1>
       <p class="subtitle">{{ labels().heroSubtitle }}</p>
-      <p class="hero-support">
-        {{ labels().heroSupport }}
-      </p>
     </div>
 
     <div class="hero-action-card">
@@ -56,6 +53,12 @@
           [attemptedSources]="summaryAttemptedSources()"
           [labels]="labels()"
         ></app-metrics-summary>
+        <p class="result-help">
+          {{ labels().resultHelpExtraction }} {{ labels().resultHelpFreshness }}
+        </p>
+        @if (conversionLoading()) {
+          <p class="conversion-loading">{{ labels().conversionLoadingLabel }}</p>
+        }
 
         @if (dashboardOffers().length > 0) {
           <section class="results" [attr.aria-label]="labels().topOffersAriaLabel">
@@ -72,14 +75,14 @@
 
       <div class="suggestion-chips" [attr.aria-label]="labels().searchSuggestionsAriaLabel">
         @for (suggestion of labels().searchSuggestions; track suggestion) {
-          <button type="button">{{ suggestion }}</button>
+          <button type="button" (click)="applySuggestion(suggestion)">{{ suggestion }}</button>
         }
       </div>
     </div>
   </section>
 
   <section class="trust-grid" [attr.aria-label]="labels().trustGridAriaLabel">
-    @for (card of labels().trustCards; track card.title) {
+    @for (card of trustHighlights(); track card.title) {
       <article>
         <span class="trust-grid__icon">{{ card.icon }}</span>
         <h2>{{ card.title }}</h2>
