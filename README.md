@@ -66,3 +66,19 @@ npm start
 ```
 
 Open `http://localhost:4200`. The Angular dev server proxies `/api` requests to `http://localhost:5235`.
+
+## Run the full stack with Docker Compose
+
+Docker Compose starts the Angular client, the ASP.NET Core API, and SearXNG together:
+
+```bash
+docker compose up --build
+```
+
+Open the client at `http://localhost:4200`. The API is also available at `http://localhost:5050`, and SearXNG is available at `http://localhost:8080` for local verification. The API uses `http://searxng:8080` inside the Compose network, and the checked-in `searxng/settings.yml` enables JSON responses.
+
+Stop the stack with:
+
+```bash
+docker compose down
+```

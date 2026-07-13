@@ -1,0 +1,46 @@
+services:
+  client:
+    container_name: price-comparer-web-client
+    build:
+      context: ./client
+    depends_on:
+      - server
+    ports:
+      - "4200:8080"
+    restart: unless-stopped
+
+  server:
+    container_name: price-comparer-web-server
+    build:
+      context: ./server
+    depends_on:
+      - searxng
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ProductSearch__Provider: SearXng
+      ProductSearch__SearXngBaseUrl: http://searxng:8080
+    ports:
+      - "5050:8080"
+    restart: unless-stopped
+
+  searxng:
+    container_name: price-comparer-web-searxng
+    image: docker.io/searxng/searxng:latest
+    environment:
+      SEARXNG_BASE_URL: http://localhost:8080/
+      SEARXNG_HOST: 0.0.0.0
+      SEARXNG_PORT: "8080"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    volumes:
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+      - searxng-cache:/var/cache/searxng
+
+networks:
+  default:
+    name: price-comparer-web
+
+volumes:
+  searxng-cache:
