@@ -34,3 +34,17 @@ Do not commit credentials or private endpoints. Keep local overrides in developm
 ## OpenSpec Verification Policy
 
 Before considering OpenSpec work complete, always call `openspec-implementation-auditor` as a subagent to verify all OpenSpec tasks were implemented correctly, completely, and traceably.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs are tracked in GitHub Issues; external pull requests are not a triage surface. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Triage uses the default canonical labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This repository uses a multi-context layout with separate frontend and backend contexts. See `docs/agents/domain.md`.
