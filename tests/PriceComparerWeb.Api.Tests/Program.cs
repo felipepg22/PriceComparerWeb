@@ -10,6 +10,8 @@ await ProductSearchServiceAttemptsAllCandidatesWhenConcurrencyIsLower();
 await ProductSearchServiceClampsInvalidConcurrencyToOne();
 await ProductSearchServiceExcludesLowPriceOutliersWithinSameCurrency();
 await SearXngProviderHonorsMaxCandidates();
+await SearXngProviderExcludesConfiguredHostsBeforeCandidateCap();
+await ProductSearchServiceExcludesBlockedRedirectsSilently();
 
 Console.WriteLine("Product search configuration regression checks passed.");
 
@@ -71,6 +73,30 @@ static async Task SearXngProviderHonorsMaxCandidates()
     AssertEqual(5, candidates.Count, "Provider should use MaxCandidates as the candidate cap.");
 }
 
+static async Task SearXngProviderExcludesConfiguredHostsBeforeCandidateCap()
+{
+    var provider = new SearXngProductSearchProvider(
+        Options.Create(new ProductSearchOptions
+        {
+            SearXngBaseUrl = "https://search.example",
+            MaxCandidates = 2,
+            ExcludedHosts = [" YOUTUBE.com ", "not a hostname", "youtube.com/path", ""]
+        }),
+        new FixedHttpClientFactory(new HttpClient(new SearXngExcludedHostsResponseHandler())
+        {
+            BaseAddress = new Uri("https://search.example")
+        }));
+
+    var candidates = await provider.FindCandidatesAsync("phone", CancellationToken.None);
+
+    AssertEqual(2, candidates.Count, "Eligible candidates should fill the cap after excluded results are removed.");
+    AssertTrue(candidates.All(candidate =>
+        !candidate.Url.Contains("youtube.com", StringComparison.OrdinalIgnoreCase)),
+        "Blocked roots and subdomains must not become candidates.");
+    AssertTrue(candidates.Any(candidate => candidate.Url.Contains("store.example", StringComparison.OrdinalIgnoreCase)),
+        "Eligible store candidates should remain available.");
+}
+
 static async Task ProductSearchServiceExcludesLowPriceOutliersWithinSameCurrency()
 {
     var candidates = new[]
@@ -123,6 +149,36 @@ static async Task ProductSearchServiceExcludesLowPriceOutliersWithinSameCurrency
         "Warnings should include low outlier exclusion reason.");
 }
 
+static async Task ProductSearchServiceExcludesBlockedRedirectsSilently()
+{
+    var candidates = new[]
+    {
+        new ProductSearchCandidate("https://short.example/blocked", "test", "Blocked"),
+        new ProductSearchCandidate("https://short.example/allowed", "test", "Allowed")
+    };
+    var scraper = new TrackingPageScraper(new Dictionary<string, string>
+    {
+        [candidates[0].Url] = "https://www.youtube.com/watch?v=1",
+        [candidates[1].Url] = "https://store.example/product"
+    });
+    var extractor = new RecordingOfferExtractor();
+    var service = new ProductSearchService(
+        Options.Create(new ProductSearchOptions { ExcludedHosts = ["youtube.com"], MaxConcurrency = 2 }),
+        new FixedProductSearchProvider(candidates),
+        scraper,
+        extractor);
+
+    var response = await service.SearchAsync(new ProductSearchRequest("phone", null), CancellationToken.None);
+
+    AssertEqual(2, scraper.FetchCount, "Redirect candidates should be fetched before final-host filtering.");
+    AssertEqual(1, extractor.Calls, "Blocked final destinations must not reach price extraction.");
+    AssertEqual(1, response.CandidateCount, "Blocked redirects must be absent from candidate counts.");
+    AssertEqual(1, response.AttemptedSourceCount, "Blocked redirects must be absent from attempted counts.");
+    AssertEqual(1, response.Offers.Count, "Allowed final destinations should remain offers.");
+    AssertTrue(response.AttemptedSources.All(source => !source.Url.Contains("blocked", StringComparison.OrdinalIgnoreCase)), "Blocked redirects must be absent from attempted sources.");
+    AssertEqual(0, response.Warnings.Count, "Blocked redirects must be silent.");
+}
+
 static void AssertEqual<T>(T expected, T actual, string message)
 {
     if (!EqualityComparer<T>.Default.Equals(expected, actual))
@@ -161,7 +217,7 @@ sealed class FixedProductSearchProvider(IReadOnlyList<ProductSearchCandidate> ca
     }
 }
 
-sealed class TrackingPageScraper : IPageScraper
+sealed class TrackingPageScraper(IReadOnlyDictionary<string, string>? finalUrls = null) : IPageScraper
 {
     private readonly object syncRoot = new();
     private readonly HtmlParser parser = new();
@@ -187,7 +243,7 @@ sealed class TrackingPageScraper : IPageScraper
 
             return new PageScrapeDocument(
                 RequestedUrl: uri.ToString(),
-                FinalUrl: uri.ToString(),
+                FinalUrl: finalUrls is not null && finalUrls.TryGetValue(uri.ToString(), out var finalUrl) ? finalUrl : uri.ToString(),
                 StatusCode: 200,
                 Document: document,
                 FetchedAtUtc: DateTime.UtcNow);
@@ -222,6 +278,27 @@ sealed class OfferMapPriceExtractor(IReadOnlyDictionary<string, ProductOffer> of
     }
 }
 
+sealed class RecordingOfferExtractor : IPriceExtractor
+{
+    public int Calls { get; private set; }
+
+    public ProductOffer? ExtractOffer(PageScrapeDocument page, ProductSearchCandidate candidate, string? requestedCurrency, out string? exclusionReason)
+    {
+        Calls++;
+        exclusionReason = null;
+        return new ProductOffer(
+            Title: candidate.Title ?? candidate.Url,
+            PriceAmount: 100m,
+            Currency: "USD",
+            Seller: "store.example",
+            Url: candidate.Url,
+            SourceName: "test",
+            ExtractionMethod: "structured-data",
+            Confidence: 0.95,
+            FetchedAtUtc: DateTime.UtcNow);
+    }
+}
+
 sealed class FixedHttpClientFactory(HttpClient client) : IHttpClientFactory
 {
     public HttpClient CreateClient(string name)
@@ -241,6 +318,28 @@ sealed class SearXngResponseHandler : HttpMessageHandler
         var response = new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent($$"""{"results":[{{results}}]}""", Encoding.UTF8, "application/json")
+        };
+
+        return Task.FromResult(response);
+    }
+}
+
+sealed class SearXngExcludedHostsResponseHandler : HttpMessageHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var response = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                "{\"results\":[" +
+                "{\"url\":\"https://youtube.com/watch?v=1\",\"title\":\"phone buy price\",\"content\":\"phone shop\"}," +
+                "{\"url\":\"https://WWW.YouTube.com/shorts/1\",\"title\":\"phone buy price\",\"content\":\"phone shop\"}," +
+                "{\"url\":\"https://sub.youtube.com/watch?v=2\",\"title\":\"phone buy price\",\"content\":\"phone shop\"}," +
+                "{\"url\":\"https://notyoutube.com/product\",\"title\":\"phone buy price\",\"content\":\"phone shop\"}," +
+                "{\"url\":\"https://store.example/product\",\"title\":\"phone buy price\",\"content\":\"phone shop\"}," +
+                "{\"url\":\"https://another-store.example/product\",\"title\":\"phone buy price\",\"content\":\"phone shop\"}]}",
+                Encoding.UTF8,
+                "application/json")
         };
 
         return Task.FromResult(response);

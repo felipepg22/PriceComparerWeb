@@ -13,7 +13,7 @@ PriceComparerWeb is a web app to compare prices for any kind of product across o
 - The app searches the web for matching offers.
 - Matching can use product model, SKU, and/or product name.
 - Supported currencies: BRL (Brazilian Real), USD (US Dollar), and EUR (Euro).
-- No website is explicitly excluded as a data source.
+- Product Search excludes configured non-commerce hosts (including their subdomains) during SearXNG discovery.
 
 ## Offer data shown
 
@@ -53,6 +53,8 @@ curl "http://localhost:8080/search?q=test&format=json"
 ```
 
 If SearXNG returns `403`, enable the `json` format in its `settings.yml`.
+
+The base server configuration excludes common non-commerce hosts such as social networks, forums, reference sites, search engines, and editorial publications. Override `ProductSearch:ExcludedHosts` in deployment configuration to replace that collection; blank or malformed hostnames are ignored. Matching is case-insensitive and applies to the configured root hostname and its subdomains. Retailer and marketplace hosts remain eligible unless explicitly configured.
 
 ## Run client
 

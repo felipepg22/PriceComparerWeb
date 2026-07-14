@@ -61,6 +61,7 @@ public sealed class SearXngProductSearchProvider(
     {
         var searchOptions = options.Value;
         var baseUri = ParseSearXngBaseUri(searchOptions);
+        var excludedHostPolicy = ExcludedHostPolicy.From(searchOptions.ExcludedHosts);
         var client = httpClientFactory.CreateClient("searxng");
         var scoredCandidates = new Dictionary<string, ScoredCandidate>(StringComparer.OrdinalIgnoreCase);
 
@@ -79,6 +80,11 @@ public sealed class SearXngProductSearchProvider(
             var tokens = TextHelpers.QueryTokens(query);
             foreach (var (result, index) in (searchResponse?.Results ?? []).Select((result, index) => (result, index)))
             {
+                if (IsExcludedUrl(result.Url, excludedHostPolicy))
+                {
+                    continue;
+                }
+
                 var scoredCandidate = ToScoredCandidate(result, tokens, index);
                 if (scoredCandidate is null)
                 {
@@ -166,6 +172,11 @@ public sealed class SearXngProductSearchProvider(
         return score <= 0
             ? null
             : new ScoredCandidate(new ProductSearchCandidate(result.Url, "SearXNG", TextHelpers.NullIfBlank(result.Title)), score, rank);
+    }
+
+    private static bool IsExcludedUrl(string url, ExcludedHostPolicy excludedHostPolicy)
+    {
+        return Uri.TryCreate(url, UriKind.Absolute, out var uri) && excludedHostPolicy.IsExcluded(uri);
     }
 
     private static int ScoreCandidate(string? title, string? content, string url, IReadOnlyList<string> tokens)
