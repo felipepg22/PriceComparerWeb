@@ -3,41 +3,13 @@
 }
 
 .search-panel {
-  display: grid;
-  gap: var(--wise-space-md, 0.75rem);
   min-width: 0;
-}
-
-.search-panel__intro {
-  display: grid;
-  gap: var(--wise-space-xs, 0.25rem);
-  min-width: 0;
-}
-
-.search-panel__intro p,
-.search-panel__intro span {
-  margin: 0;
-}
-
-.search-panel__intro p {
-  color: var(--wise-ink, #121511);
-  font-size: 0.98rem;
-  line-height: 1.25rem;
-  font-weight: 780;
-}
-
-.search-panel__intro span {
-  color: var(--wise-muted, #687368);
-  font-size: 0.86rem;
-  line-height: 1.3rem;
-  font-weight: 560;
-  overflow-wrap: anywhere;
 }
 
 .search-panel__controls {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem) max-content;
-  gap: var(--wise-space-md, 0.75rem);
+  grid-template-columns: minmax(18rem, 1fr) minmax(17rem, auto) max-content;
+  gap: var(--wise-space-lg, 1rem);
   align-items: end;
 }
 
@@ -48,19 +20,19 @@
 }
 
 .search-panel__label {
-  color: var(--wise-muted, #687368);
-  font-size: 0.78rem;
-  font-weight: 720;
-  line-height: 1.2;
+  color: var(--wise-ink, #0e0f0c);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.25rem;
 }
 
 input,
 button {
   min-width: 0;
-  min-height: 2.9rem;
-  border: 1px solid var(--wise-border-strong, rgba(18, 21, 17, 0.18));
+  min-height: 3.5rem;
+  border: 1px solid var(--wise-ink, #0e0f0c);
   border-radius: var(--wise-radius-control, 12px);
-  color: var(--wise-ink, #121511);
+  color: var(--wise-ink, #0e0f0c);
   font: inherit;
   line-height: 1.5rem;
 }
@@ -70,8 +42,8 @@ input {
 }
 
 input {
-  background: var(--wise-panel, #fafbf8);
-  padding: var(--wise-space-sm, 0.5rem) var(--wise-space-md, 0.75rem);
+  background: var(--wise-canvas, #ffffff);
+  padding: 0.875rem var(--wise-space-lg, 1rem);
   transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
 }
 
@@ -81,7 +53,8 @@ input:hover {
 }
 
 input {
-  font-size: 1.02rem;
+  font-size: 1.125rem;
+  font-weight: 560;
 }
 
 input::placeholder {
@@ -91,11 +64,11 @@ input::placeholder {
 
 .currency-picker {
   min-width: 0;
-  min-height: 2.9rem;
+  min-height: 3.5rem;
   padding: 0.25rem;
   border: 1px solid var(--wise-border-strong);
   border-radius: var(--wise-radius-control);
-  background: var(--wise-sage);
+  background: var(--wise-sage, #e8ebe6);
   display: grid;
   grid-template-columns: minmax(8.25rem, 1.8fr) repeat(3, minmax(3rem, 1fr));
   gap: 0.1875rem;
@@ -127,13 +100,13 @@ input::placeholder {
 
 .currency-picker__content {
   min-width: 0;
-  min-height: 2.35rem;
-  border-radius: 0.5rem;
+  min-height: 3rem;
+  border-radius: 0.625rem;
   color: var(--wise-body);
   display: grid;
   place-items: center;
   padding: 0 var(--wise-space-sm);
-  font-size: 0.83rem;
+  font-size: 0.875rem;
   font-weight: 760;
   white-space: nowrap;
   overflow: hidden;
@@ -165,10 +138,11 @@ input::placeholder {
 }
 
 button {
-  border-color: var(--wise-primary, #255f43);
-  background: var(--wise-primary, #255f43);
-  color: var(--wise-canvas, #ffffff);
-  padding: var(--wise-space-sm, 0.5rem) var(--wise-space-lg, 1rem);
+  border-color: #9fe870;
+  border-radius: var(--wise-radius-pill, 9999px);
+  background: #9fe870;
+  color: var(--wise-ink, #0e0f0c);
+  padding: 0.875rem 1.75rem;
   font-weight: 760;
   white-space: nowrap;
   cursor: pointer;
@@ -176,8 +150,8 @@ button {
 }
 
 button:hover:not(:disabled) {
-  border-color: var(--wise-primary-active, #1b4933);
-  background: var(--wise-primary-active, #1b4933);
+  border-color: #cdffad;
+  background: #cdffad;
 }
 
 button:active:not(:disabled) {
@@ -212,9 +186,18 @@ button:focus-visible {
 }
 
 @media (max-width: 767px) {
-  .search-panel,
   .search-panel__controls {
     grid-template-columns: 1fr;
+  }
+
+  .search-panel__field--query,
+  .search-panel__field--currency {
+    grid-column: auto;
+    min-width: 0;
+  }
+
+  .search-panel__submit {
+    width: 100%;
   }
 }
 

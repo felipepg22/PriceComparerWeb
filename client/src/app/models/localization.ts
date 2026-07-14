@@ -38,6 +38,10 @@ export interface AppTranslations {
   candidatePages: string;
   attemptedSources: string;
   topOffersAriaLabel: string;
+  bestOffersTitle: string;
+  bestOverall: string;
+  bestOverallExplanation: string;
+  showMoreOffers: string;
   resultHelpExtraction: string;
   resultHelpFreshness: string;
   conversionLoadingLabel: string;
@@ -105,6 +109,10 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     candidatePages: 'candidate pages',
     attemptedSources: 'attempted sources',
     topOffersAriaLabel: 'Top ranked offers',
+    bestOffersTitle: 'Best offers',
+    bestOverall: 'Best overall',
+    bestOverallExplanation: 'Highest-ranked based on reliability, price, and confidence.',
+    showMoreOffers: 'Show more offers',
     resultHelpExtraction: 'Extraction shows how the price was read from each page.',
     resultHelpFreshness: 'Rate freshness shows when currency conversion data was last updated.',
     conversionLoadingLabel: 'Updating conversion rates...',
@@ -175,6 +183,10 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     candidatePages: 'páginas candidatas',
     attemptedSources: 'fontes tentadas',
     topOffersAriaLabel: 'Ofertas melhor ranqueadas',
+    bestOffersTitle: 'Melhores ofertas',
+    bestOverall: 'Melhor oferta geral',
+    bestOverallExplanation: 'Melhor classificação com base em confiabilidade, preço e confiança.',
+    showMoreOffers: 'Mostrar mais ofertas',
     resultHelpExtraction: 'Extração mostra como o preço foi lido em cada página.',
     resultHelpFreshness: 'Atualização da cotação mostra quando os dados de conversão foram atualizados.',
     conversionLoadingLabel: 'Atualizando cotações...',
@@ -245,6 +257,10 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     candidatePages: 'páginas candidatas',
     attemptedSources: 'fuentes intentadas',
     topOffersAriaLabel: 'Ofertas mejor clasificadas',
+    bestOffersTitle: 'Mejores ofertas',
+    bestOverall: 'Mejor oferta general',
+    bestOverallExplanation: 'La mejor clasificación según fiabilidad, precio y confianza.',
+    showMoreOffers: 'Mostrar más ofertas',
     resultHelpExtraction: 'Extracción indica cómo se leyó el precio en cada página.',
     resultHelpFreshness: 'Actualización del tipo de cambio indica cuándo se actualizaron los datos de conversión.',
     conversionLoadingLabel: 'Actualizando tipos de cambio...',
