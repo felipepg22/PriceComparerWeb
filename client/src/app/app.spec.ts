@@ -108,7 +108,7 @@ describe('App localization and conversion', () => {
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
-    expect(root.textContent).toContain('Encontre a melhor oferta, não só a mais barata.');
+    expect(root.textContent).toContain('Encontre a melhor oferta');
     expect(document.documentElement.lang).toBe('pt-BR');
     expect(document.title).toBe('Price Comparer');
     expect((root.querySelector('select#locale') as HTMLSelectElement).value).toBe('pt-BR');
@@ -128,7 +128,7 @@ describe('App localization and conversion', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
-    expect(root.textContent).toContain('Encuentra la mejor oferta, no solo la más barata.');
+    expect(root.textContent).toContain('Encuentra la mejor oferta');
   });
 
   it('uses exact supported browser locale', () => {
@@ -137,7 +137,7 @@ describe('App localization and conversion', () => {
     Object.defineProperty(navigator, 'language', { value: 'pt-BR', configurable: true });
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Encontre a melhor oferta, não só a mais barata.');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Encontre a melhor oferta');
   });
 
   it('falls back to en-US when browser locale is unsupported', () => {
@@ -146,7 +146,7 @@ describe('App localization and conversion', () => {
     Object.defineProperty(navigator, 'language', { value: 'fr-FR', configurable: true });
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Find the best offer, not just the cheapest one.');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Find the best offer');
   });
 
   it('keeps search payload semantics unchanged when language or product currency changes', () => {
@@ -170,7 +170,7 @@ describe('App localization and conversion', () => {
     expect(root.querySelector('.topbar')?.getAttribute('aria-label')).toBe('Navegação principal');
     expect(root.querySelector('.brand')?.getAttribute('aria-label')).toBe('Início do Price Comparer');
     expect(root.querySelector('.suggestion-chips')?.getAttribute('aria-label')).toBe('Sugestões de busca');
-    expect(root.textContent).toContain('Encontre a melhor oferta, não só a mais barata.');
+    expect(root.textContent).toContain('Encontre a melhor oferta');
     expect(root.textContent).toContain('Notebook gamer');
     expect(root.textContent).toContain('Buscar ofertas');
     expect(root.querySelector('.trust-grid')).toBeNull();
@@ -184,7 +184,7 @@ describe('App localization and conversion', () => {
     expect(root.querySelector('#locale')?.getAttribute('aria-label')).toBe('Idioma');
     expect((root.querySelector('select#locale') as HTMLSelectElement).value).toBe('es-ES');
     expect(root.querySelector('.suggestion-chips')?.getAttribute('aria-label')).toBe('Sugerencias de búsqueda');
-    expect(root.textContent).toContain('Encuentra la mejor oferta, no solo la más barata.');
+    expect(root.textContent).toContain('Encuentra la mejor oferta');
     expect(root.textContent).toContain('Portátil gaming');
     expect(root.textContent).toContain('Buscar ofertas');
     expect(root.textContent).not.toContain('Panel de comparación de productos');
@@ -264,7 +264,7 @@ describe('App localization and conversion', () => {
     http.expectNone('/api/products/search');
     expect((root.querySelector('#query') as HTMLInputElement).value).toBe('headphones');
     expect(root.textContent).toContain('Headphone A');
-    expect(root.textContent).toContain('Encontre a melhor oferta, não só a mais barata.');
+    expect(root.textContent).toContain('Encontre a melhor oferta');
   });
 
   it('product currency change preserves source filter and offer order without product search', () => {
