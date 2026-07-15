@@ -13,7 +13,7 @@ PriceComparerWeb is a web app to compare prices for any kind of product across o
 - The app searches the web for matching offers.
 - Matching can use product model, SKU, and/or product name.
 - Supported currencies: BRL (Brazilian Real), USD (US Dollar), and EUR (Euro).
-- No website is explicitly excluded as a data source.
+- Product Search excludes configured non-commerce hosts (including their subdomains) during SearXNG discovery.
 
 ## Offer data shown
 
@@ -54,6 +54,8 @@ curl "http://localhost:8080/search?q=test&format=json"
 
 If SearXNG returns `403`, enable the `json` format in its `settings.yml`.
 
+The base server configuration excludes common non-commerce hosts such as social networks, forums, reference sites, search engines, and editorial publications. Override `ProductSearch:ExcludedHosts` in deployment configuration to replace that collection; blank or malformed hostnames are ignored. Matching is case-insensitive and applies to the configured root hostname and its subdomains. Retailer and marketplace hosts remain eligible unless explicitly configured.
+
 ## Run client
 
 Angular 21 needs Node >= 20.19.
@@ -66,3 +68,19 @@ npm start
 ```
 
 Open `http://localhost:4200`. The Angular dev server proxies `/api` requests to `http://localhost:5235`.
+
+## Run the full stack with Docker Compose
+
+Docker Compose starts the Angular client, the ASP.NET Core API, and SearXNG together:
+
+```bash
+docker compose up --build
+```
+
+Open the client at `http://localhost:4200`. The API is also available at `http://localhost:5050`, and SearXNG is available at `http://localhost:8080` for local verification. The API uses `http://searxng:8080` inside the Compose network, and the checked-in `searxng/settings.yml` enables JSON responses.
+
+Stop the stack with:
+
+```bash
+docker compose down
+```

@@ -1,23 +1,22 @@
 <article class="offer-card">
+  <div class="offer-card__rank">{{ rank }}</div>
+
   <div class="offer-card__main">
+    @if (rank === 1 && bestOverallLabel) {
+      <p class="offer-card__best">{{ bestOverallLabel }}</p>
+    }
     <p class="offer-card__seller">{{ offer.sellerLabel }}</p>
     <h2>{{ offer.title }}</h2>
-    <p class="offer-card__meta">
-      <span [attr.title]="offer.sourceLabel">{{ offer.sourceName }}</span>
-      <span aria-hidden="true">•</span>
-      <span [attr.title]="offer.extractionLabel">{{ offer.extractionMethod }}</span>
-    </p>
+    @if (rank === 1 && bestOverallExplanation) {
+      <p class="offer-card__explanation">{{ bestOverallExplanation }}</p>
+    }
   </div>
 
   <div class="offer-card__side">
     <p class="offer-card__price">{{ offer.displayPrice }}</p>
-    <p class="offer-card__original">{{ offer.originalPriceLabel }}: {{ offer.originalPrice }}</p>
-    @if (offer.conversionUnavailable) {
-      <p class="offer-card__conversion-note">{{ offer.conversionUnavailableLabel }}</p>
-    } @else {
-      <p class="offer-card__conversion-note">{{ offer.freshnessLabel }}</p>
+    @if (!offer.conversionUnavailable && offer.originalPrice !== offer.displayPrice) {
+      <p class="offer-card__original">{{ offer.originalPriceLabel }}: {{ offer.originalPrice }}</p>
     }
-    <p class="offer-card__confidence">{{ offer.confidencePercent }} · {{ offer.confidenceLabel }}</p>
     <a [href]="offer.url" target="_blank" rel="noopener">{{ offer.openOfferLabel }}</a>
   </div>
 </article>

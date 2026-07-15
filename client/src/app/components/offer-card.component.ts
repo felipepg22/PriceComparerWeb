@@ -9,4 +9,7 @@ import { DashboardOffer } from '../models/product-search';
 })
 export class OfferCardComponent {
   @Input({ required: true }) offer!: DashboardOffer;
+  @Input({ required: true }) rank!: number;
+  @Input() bestOverallLabel = '';
+  @Input() bestOverallExplanation = '';
 }

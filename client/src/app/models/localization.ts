@@ -38,6 +38,10 @@ export interface AppTranslations {
   candidatePages: string;
   attemptedSources: string;
   topOffersAriaLabel: string;
+  bestOffersTitle: string;
+  bestOverall: string;
+  bestOverallExplanation: string;
+  showMoreOffers: string;
   resultHelpExtraction: string;
   resultHelpFreshness: string;
   conversionLoadingLabel: string;
@@ -88,7 +92,7 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     brandHomeAriaLabel: 'Price Comparer home',
     topbarNote: 'Clear price. Trusted store.',
     heroEyebrow: 'Product comparison dashboard',
-    heroTitle: 'Find the best offer, not just the cheapest one.',
+    heroTitle: 'Find the best offer',
     heroSubtitle: 'Search trusted sources and review top ranked offers (up to 10) in one place.',
     heroSupport: 'Compare price, shipping, delivery time, and store trust signals in a clean, focused experience.',
     searchIntroTitle: 'Product search',
@@ -105,6 +109,10 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     candidatePages: 'candidate pages',
     attemptedSources: 'attempted sources',
     topOffersAriaLabel: 'Top ranked offers',
+    bestOffersTitle: 'Best offers',
+    bestOverall: 'Best overall',
+    bestOverallExplanation: 'Highest-ranked based on reliability, price, and confidence.',
+    showMoreOffers: 'Show more offers',
     resultHelpExtraction: 'Extraction shows how the price was read from each page.',
     resultHelpFreshness: 'Rate freshness shows when currency conversion data was last updated.',
     conversionLoadingLabel: 'Updating conversion rates...',
@@ -158,7 +166,7 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     brandHomeAriaLabel: 'Início do Price Comparer',
     topbarNote: 'Preço claro. Loja confiável.',
     heroEyebrow: 'Painel de comparação de produtos',
-    heroTitle: 'Encontre a melhor oferta, não só a mais barata.',
+    heroTitle: 'Encontre a melhor oferta',
     heroSubtitle: 'Pesquise em fontes confiáveis e analise as melhores ofertas (até 10) em um só lugar.',
     heroSupport: 'Compare preço, frete, prazo e sinais de confiabilidade da loja em uma experiência limpa e objetiva.',
     searchIntroTitle: 'Busca de produto',
@@ -175,6 +183,10 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     candidatePages: 'páginas candidatas',
     attemptedSources: 'fontes tentadas',
     topOffersAriaLabel: 'Ofertas melhor ranqueadas',
+    bestOffersTitle: 'Melhores ofertas',
+    bestOverall: 'Melhor oferta geral',
+    bestOverallExplanation: 'Melhor classificação com base em confiabilidade, preço e confiança.',
+    showMoreOffers: 'Mostrar mais ofertas',
     resultHelpExtraction: 'Extração mostra como o preço foi lido em cada página.',
     resultHelpFreshness: 'Atualização da cotação mostra quando os dados de conversão foram atualizados.',
     conversionLoadingLabel: 'Atualizando cotações...',
@@ -228,7 +240,7 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     brandHomeAriaLabel: 'Inicio de Price Comparer',
     topbarNote: 'Precio claro. Tienda confiable.',
     heroEyebrow: 'Panel de comparación de productos',
-    heroTitle: 'Encuentra la mejor oferta, no solo la más barata.',
+    heroTitle: 'Encuentra la mejor oferta',
     heroSubtitle: 'Busca en fuentes confiables y revisa las mejores ofertas (hasta 10) en un solo lugar.',
     heroSupport: 'Compara precio, envío, plazo y señales de confianza de la tienda en una experiencia limpia y directa.',
     searchIntroTitle: 'Búsqueda de producto',
@@ -245,6 +257,10 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     candidatePages: 'páginas candidatas',
     attemptedSources: 'fuentes intentadas',
     topOffersAriaLabel: 'Ofertas mejor clasificadas',
+    bestOffersTitle: 'Mejores ofertas',
+    bestOverall: 'Mejor oferta general',
+    bestOverallExplanation: 'La mejor clasificación según fiabilidad, precio y confianza.',
+    showMoreOffers: 'Mostrar más ofertas',
     resultHelpExtraction: 'Extracción indica cómo se leyó el precio en cada página.',
     resultHelpFreshness: 'Actualización del tipo de cambio indica cuándo se actualizaron los datos de conversión.',
     conversionLoadingLabel: 'Actualizando tipos de cambio...',

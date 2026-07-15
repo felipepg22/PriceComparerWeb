@@ -2,7 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
-import { MetricsSummaryComponent } from './components/metrics-summary.component';
 import { OfferCardComponent } from './components/offer-card.component';
 import { SearchPanelComponent } from './components/search-panel.component';
 import { StateMessageComponent } from './components/state-message.component';
@@ -21,7 +20,6 @@ import { PreferencesService } from './services/preferences.service';
   imports: [
     ReactiveFormsModule,
     SearchPanelComponent,
-    MetricsSummaryComponent,
     OfferCardComponent,
     StateMessageComponent
   ],
@@ -39,11 +37,13 @@ export class App {
   protected readonly conversionFreshness = signal<string | null>(null);
   protected readonly conversionLoading = signal(false);
   protected readonly conversionUnavailable = signal(false);
+  protected readonly showAllOffers = signal(false);
   protected readonly labels = computed(() => this.preferences.translations());
   protected readonly dashboardOffers = computed(() => this.result()?.offers.map(offer => this.dashboardOffer(offer)) ?? []);
+  protected readonly visibleOffers = computed(() => this.showAllOffers() ? this.dashboardOffers() : this.dashboardOffers().slice(0, 3));
+  protected readonly hasMoreOffers = computed(() => !this.showAllOffers() && this.dashboardOffers().length > 3);
   protected readonly localeOptions = this.preferences.localeOptions;
   protected readonly currencyOptions = this.preferences.currencyOptions;
-  protected readonly trustHighlights = computed(() => this.labels().trustCards);
 
   protected readonly form = new FormGroup({
     query: new FormControl('', {
@@ -71,6 +71,7 @@ export class App {
     }
 
     this.loading.set(true);
+    this.showAllOffers.set(false);
     this.apiError.set(null);
     this.result.set(null);
     this.conversionRates.set(new Map());
@@ -101,6 +102,10 @@ export class App {
 
   protected onLocaleChange(locale: string): void {
     this.preferences.setLocale(locale as SupportedLocale);
+  }
+
+  protected showMoreOffers(): void {
+    this.showAllOffers.set(true);
   }
 
   protected applySuggestion(suggestion: string): void {
@@ -188,18 +193,6 @@ export class App {
       originalPriceLabel: labels.originalPrice,
       url: offer.url
     };
-  }
-
-  protected summaryFoundOffers(): string {
-    return this.preferences.formatCount(this.result()?.offers.length ?? 0);
-  }
-
-  protected summaryCandidatePages(): string {
-    return this.preferences.formatCount(this.result()?.candidateCount ?? 0);
-  }
-
-  protected summaryAttemptedSources(): string {
-    return this.preferences.formatCount(this.result()?.attemptedSourceCount ?? 0);
   }
 
   private isSupportedCurrency(currency: string): currency is SupportedCurrency {

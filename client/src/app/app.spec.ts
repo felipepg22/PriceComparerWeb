@@ -28,19 +28,42 @@ function submitSearch(fixture: ReturnType<typeof TestBed.createComponent<App>>, 
   fixture.detectChanges();
 }
 
-function localeButton(root: HTMLElement, locale: SupportedLocale): HTMLButtonElement {
-  const button = root.querySelector<HTMLButtonElement>(`button[data-locale="${locale}"]`);
-  if (!button) {
-    throw new Error(`Expected language button for ${locale}`);
-  }
-
-  return button;
-}
-
 function changeLocale(fixture: ReturnType<typeof TestBed.createComponent<App>>, locale: SupportedLocale): void {
   const root = fixture.nativeElement as HTMLElement;
-  localeButton(root, locale).click();
+  const select = root.querySelector<HTMLSelectElement>('select#locale');
+  if (!select) {
+    throw new Error('Expected locale select');
+  }
+  select.value = locale;
+  select.dispatchEvent(new Event('change'));
   fixture.detectChanges();
+}
+
+function offer(index: number, currency: SupportedCurrency = 'USD') {
+  return {
+    title: `Offer ${index}`,
+    priceAmount: index * 100,
+    currency,
+    seller: `Seller ${index}`,
+    url: `https://example.com/${index}`,
+    sourceName: `Source ${index}`,
+    extractionMethod: `method-${index}`,
+    confidence: 0.9,
+    fetchedAtUtc: '2026-05-11T12:00:00Z'
+  };
+}
+
+function searchResponse(offers: ReturnType<typeof offer>[], query = 'phone') {
+  return {
+    query,
+    currency: null,
+    fetchedAtUtc: '2026-05-11T12:00:00Z',
+    candidateCount: 1200,
+    attemptedSourceCount: 900,
+    offers,
+    attemptedSources: [],
+    warnings: []
+  };
 }
 
 function changeProductCurrency(fixture: ReturnType<typeof TestBed.createComponent<App>>, currency: SearchCurrency): void {
@@ -85,20 +108,16 @@ describe('App localization and conversion', () => {
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
-    expect(root.textContent).toContain('Painel de comparação de produtos');
+    expect(root.textContent).toContain('Encontre a melhor oferta');
     expect(document.documentElement.lang).toBe('pt-BR');
     expect(document.title).toBe('Price Comparer');
-    expect(root.querySelector('select#locale')).toBeNull();
+    expect((root.querySelector('select#locale') as HTMLSelectElement).value).toBe('pt-BR');
     expect(root.querySelector('select#displayCurrency')).toBeNull();
     expect(root.querySelector('select#currency')).toBeNull();
     expect(root.querySelector('#currency')?.getAttribute('role')).toBe('radiogroup');
 
-    const topbar = root.querySelector('.topbar') as HTMLElement;
-    const activeLocale = localeButton(root, 'pt-BR');
-    expect(topbar.contains(activeLocale)).toBe(true);
-    expect(activeLocale.getAttribute('aria-pressed')).toBe('true');
-    expect(activeLocale.textContent).toContain('🇧🇷');
-    expect(activeLocale.textContent).toContain('Português (Brasil)');
+    expect(root.querySelector('select#locale')?.getAttribute('aria-label')).toBe('Idioma');
+    expect(root.querySelector('option[value="pt-BR"]')?.textContent).toContain('Português (Brasil)');
   });
 
   it('falls back to en-US for invalid persisted locale and maps browser base language', () => {
@@ -109,7 +128,7 @@ describe('App localization and conversion', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
-    expect(root.textContent).toContain('Panel de comparación de productos');
+    expect(root.textContent).toContain('Encuentra la mejor oferta');
   });
 
   it('uses exact supported browser locale', () => {
@@ -118,7 +137,7 @@ describe('App localization and conversion', () => {
     Object.defineProperty(navigator, 'language', { value: 'pt-BR', configurable: true });
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Painel de comparação de produtos');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Encontre a melhor oferta');
   });
 
   it('falls back to en-US when browser locale is unsupported', () => {
@@ -127,7 +146,7 @@ describe('App localization and conversion', () => {
     Object.defineProperty(navigator, 'language', { value: 'fr-FR', configurable: true });
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Product comparison dashboard');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Find the best offer');
   });
 
   it('keeps search payload semantics unchanged when language or product currency changes', () => {
@@ -151,34 +170,28 @@ describe('App localization and conversion', () => {
     expect(root.querySelector('.topbar')?.getAttribute('aria-label')).toBe('Navegação principal');
     expect(root.querySelector('.brand')?.getAttribute('aria-label')).toBe('Início do Price Comparer');
     expect(root.querySelector('.suggestion-chips')?.getAttribute('aria-label')).toBe('Sugestões de busca');
-    expect(root.querySelector('.trust-grid')?.getAttribute('aria-label')).toBe('Como a comparação funciona');
-    expect(root.textContent).toContain('Encontre a melhor oferta, não só a mais barata.');
-    expect(root.textContent).toContain('Busca de produto');
+    expect(root.textContent).toContain('Encontre a melhor oferta');
     expect(root.textContent).toContain('Notebook gamer');
-    expect(root.textContent).toContain('Confie na loja');
     expect(root.textContent).toContain('Buscar ofertas');
+    expect(root.querySelector('.trust-grid')).toBeNull();
 
-    expect(root.querySelector('.language-switcher')?.getAttribute('aria-label')).toBe('Idioma');
+    expect(root.querySelector('#locale')?.getAttribute('aria-label')).toBe('Idioma');
     changeLocale(fixture, 'es-ES');
     root = fixture.nativeElement as HTMLElement;
     expect(document.documentElement.lang).toBe('es-ES');
     expect(root.querySelector('.topbar')?.getAttribute('aria-label')).toBe('Navegación principal');
     expect(root.querySelector('.brand')?.getAttribute('aria-label')).toBe('Inicio de Price Comparer');
-    expect(root.querySelector('.language-switcher')?.getAttribute('aria-label')).toBe('Idioma');
-    expect(localeButton(root, 'es-ES').getAttribute('aria-pressed')).toBe('true');
-    expect(localeButton(root, 'pt-BR').getAttribute('aria-pressed')).toBe('false');
+    expect(root.querySelector('#locale')?.getAttribute('aria-label')).toBe('Idioma');
+    expect((root.querySelector('select#locale') as HTMLSelectElement).value).toBe('es-ES');
     expect(root.querySelector('.suggestion-chips')?.getAttribute('aria-label')).toBe('Sugerencias de búsqueda');
-    expect(root.querySelector('.trust-grid')?.getAttribute('aria-label')).toBe('Cómo funciona la comparación');
-    expect(root.textContent).toContain('Encuentra la mejor oferta, no solo la más barata.');
-    expect(root.textContent).toContain('Búsqueda de producto');
+    expect(root.textContent).toContain('Encuentra la mejor oferta');
     expect(root.textContent).toContain('Portátil gaming');
-    expect(root.textContent).toContain('Confía en la tienda');
     expect(root.textContent).toContain('Buscar ofertas');
-    expect(root.textContent).toContain('Panel de comparación de productos');
+    expect(root.textContent).not.toContain('Panel de comparación de productos');
     expect(root.textContent).not.toContain('Preço claro. Loja confiável.');
   });
 
-  it('shows converted price with original visibility and freshness', () => {
+  it('shows converted price and original price without conversion freshness', () => {
     setupStorage('en-US', 'USD');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
@@ -215,7 +228,7 @@ describe('App localization and conversion', () => {
     const root = fixture.nativeElement as HTMLElement;
     expect(root.textContent).toContain('$200.00');
     expect(root.textContent).toContain('Original: R$1,000.00');
-    expect(root.textContent).toContain('Rate updated');
+    expect(root.textContent).not.toContain('Rate updated');
   });
 
   it('preserves active form and results when language changes without product-search request', () => {
@@ -251,7 +264,7 @@ describe('App localization and conversion', () => {
     http.expectNone('/api/products/search');
     expect((root.querySelector('#query') as HTMLInputElement).value).toBe('headphones');
     expect(root.textContent).toContain('Headphone A');
-    expect(root.textContent).toContain('Painel de comparação de produtos');
+    expect(root.textContent).toContain('Encontre a melhor oferta');
   });
 
   it('product currency change preserves source filter and offer order without product search', () => {
@@ -316,7 +329,7 @@ describe('App localization and conversion', () => {
     expect(cards[1]).toContain('Offer Two');
   });
 
-  it('reformats counts and confidence percentages when locale changes', () => {
+  it('does not render operational metrics, confidence, source, extraction, or freshness', () => {
     setupStorage('en-US', 'USD');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
@@ -342,14 +355,12 @@ describe('App localization and conversion', () => {
       warnings: []
     });
     fixture.detectChanges();
-    let root = fixture.nativeElement as HTMLElement;
-    expect(root.textContent).toContain('1,200');
-    expect(root.textContent).toContain('95%');
-
-    changeLocale(fixture, 'pt-BR');
-    root = fixture.nativeElement as HTMLElement;
-    expect(root.textContent).toContain('1.200');
-    expect(root.textContent).toContain('95%');
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.results-summary')).toBeNull();
+    expect(root.textContent).not.toContain('95%');
+    expect(root.textContent).not.toContain('Src');
+    expect(root.textContent).not.toContain('method');
+    expect(root.textContent).not.toContain('Rate updated');
   });
 
   it('keeps external/backend content exactly as received', () => {
@@ -387,8 +398,8 @@ describe('App localization and conversion', () => {
     const root = fixture.nativeElement as HTMLElement;
     expect(root.textContent).toContain('UNTOUCHED TITLE');
     expect(root.textContent).toContain('UNTOUCHED SELLER');
-    expect(root.textContent).toContain('UNTOUCHED SOURCE');
-    expect(root.textContent).toContain('UNTOUCHED_METHOD');
+    expect(root.textContent).not.toContain('UNTOUCHED SOURCE');
+    expect(root.textContent).not.toContain('UNTOUCHED_METHOD');
     expect(root.textContent).not.toContain('RAW WARNING');
     expect(root.textContent).not.toContain('RAW BACKEND SOURCE');
   });
@@ -424,6 +435,84 @@ describe('App localization and conversion', () => {
 
     const root = fixture.nativeElement as HTMLElement;
     expect(root.textContent).toContain('Tablet Z');
-    expect(root.textContent).toContain('Conversão indisponível');
+    expect(root.textContent).not.toContain('Conversão indisponível');
+  });
+
+  it('shows only the first three offers with a count-free Show more offers control', () => {
+    setupStorage('en-US', 'USD');
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    submitSearch(fixture, 'phone');
+    http.expectOne('/api/products/search').flush(searchResponse([offer(1), offer(2), offer(3), offer(4), offer(5)]));
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const cards = root.querySelectorAll('app-offer-card');
+    expect(cards.length).toBe(3);
+    expect(cards[0].textContent).toContain('Best overall');
+    expect(cards[0].textContent).toContain('Highest-ranked based on reliability, price, and confidence.');
+    expect(root.textContent).not.toContain('Offer 4');
+    const showMore = root.querySelector<HTMLButtonElement>('button.show-more');
+    expect(showMore?.textContent?.trim()).toBe('Show more offers');
+    expect(showMore?.textContent).not.toMatch(/\d/);
+  });
+
+  it('reveals every offer after Show more offers is selected', () => {
+    setupStorage('en-US', 'USD');
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    submitSearch(fixture, 'phone');
+    http.expectOne('/api/products/search').flush(searchResponse([offer(1), offer(2), offer(3), offer(4), offer(5)]));
+    fixture.detectChanges();
+
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('button.show-more')?.click();
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelectorAll('app-offer-card').length).toBe(5);
+    expect(root.textContent).toContain('Offer 5');
+    expect(root.querySelector('button.show-more')).toBeNull();
+  });
+
+  it('resets expanded offers when a new search begins', () => {
+    setupStorage('en-US', 'USD');
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    submitSearch(fixture, 'phone');
+    http.expectOne('/api/products/search').flush(searchResponse([offer(1), offer(2), offer(3), offer(4)]));
+    fixture.detectChanges();
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('button.show-more')?.click();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('app-offer-card').length).toBe(4);
+
+    submitSearch(fixture, 'tablet');
+    http.expectOne('/api/products/search').flush(searchResponse([offer(5), offer(6), offer(7), offer(8)], 'tablet'));
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelectorAll('app-offer-card').length).toBe(3);
+    expect(root.querySelector<HTMLButtonElement>('button.show-more')?.textContent?.trim()).toBe('Show more offers');
+  });
+
+  it('only shows original price when a currency conversion changes the displayed price', () => {
+    setupStorage('en-US', 'USD');
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    submitSearch(fixture, 'camera');
+    http.expectOne('/api/products/search').flush(searchResponse([offer(1, 'USD'), offer(2, 'BRL')], 'camera'));
+    http.expectOne('/api/conversion-rates').flush({
+      targetCurrency: 'USD',
+      rates: [{ sourceCurrency: 'BRL', targetCurrency: 'USD', rate: 0.2, status: 'success' }],
+      freshness: { fetchedAtUtc: '2026-05-11T12:00:00Z', stale: false, maxAgeMinutes: 60 }
+    });
+    fixture.detectChanges();
+
+    const cards = (fixture.nativeElement as HTMLElement).querySelectorAll('app-offer-card');
+    expect(cards[0].textContent).not.toContain('Original:');
+    expect(cards[1].textContent).toContain('Original: R$200.00');
   });
 });

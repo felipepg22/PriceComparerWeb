@@ -5,31 +5,26 @@
       <span>Price Comparer</span>
     </a>
     <div class="topbar__actions">
-      <p class="topbar__note">{{ labels().topbarNote }}</p>
-      <div class="language-switcher" role="group" [attr.aria-label]="labels().languageLabel">
-        @for (locale of localeOptions; track locale.code) {
-          <button
-            type="button"
-            class="language-switcher__option"
-            [class.language-switcher__option--active]="preferences.activeLocale() === locale.code"
-            [attr.aria-pressed]="preferences.activeLocale() === locale.code"
-            [attr.data-locale]="locale.code"
-            (click)="onLocaleChange(locale.code)"
-          >
-            <span class="language-switcher__flag" aria-hidden="true">{{ locale.flag }}</span>
-            <span>{{ locale.label }}</span>
-          </button>
-        }
-      </div>
+      <label class="language-switcher" for="locale">
+        <span class="visually-hidden">{{ labels().languageLabel }}</span>
+        <span aria-hidden="true">◎</span>
+        <select
+          id="locale"
+          [attr.aria-label]="labels().languageLabel"
+          [value]="preferences.activeLocale()"
+          (change)="onLocaleChange($any($event.target).value)"
+        >
+          @for (locale of localeOptions; track locale.code) {
+            <option [value]="locale.code" [selected]="preferences.activeLocale() === locale.code">{{ locale.label }}</option>
+          }
+        </select>
+      </label>
     </div>
   </header>
 
   <section class="dashboard-hero">
     <div class="hero-copy">
-      <p class="eyebrow">{{ labels().heroEyebrow }}</p>
       <h1>{{ labels().heroTitle }}</h1>
-      <p class="subtitle">{{ labels().heroSubtitle }}</p>
-      <p class="hero-support">{{ labels().heroSupport }}</p>
     </div>
 
     <div class="hero-action-card">
@@ -49,27 +44,21 @@
 
       @if (result(); as data) {
         <section class="results-panel">
-          <div class="results-panel__summary">
-            <app-metrics-summary
-              [foundOffers]="summaryFoundOffers()"
-              [candidatePages]="summaryCandidatePages()"
-              [attemptedSources]="summaryAttemptedSources()"
-              [labels]="labels()"
-            ></app-metrics-summary>
-            <p class="result-help">
-              {{ labels().resultHelpExtraction }} {{ labels().resultHelpFreshness }}
-            </p>
-            @if (conversionLoading()) {
-              <p class="conversion-loading">{{ labels().conversionLoadingLabel }}</p>
-            }
-          </div>
-
           @if (dashboardOffers().length > 0) {
+            <h2 class="results-panel__title">{{ labels().bestOffersTitle }}</h2>
             <section class="results" [attr.aria-label]="labels().topOffersAriaLabel">
-              @for (offer of dashboardOffers(); track offer.url) {
-                <app-offer-card [offer]="offer"></app-offer-card>
+              @for (offer of visibleOffers(); track offer.url; let index = $index) {
+                <app-offer-card
+                  [offer]="offer"
+                  [rank]="index + 1"
+                  [bestOverallLabel]="labels().bestOverall"
+                  [bestOverallExplanation]="labels().bestOverallExplanation"
+                ></app-offer-card>
               }
             </section>
+            @if (hasMoreOffers()) {
+              <button class="show-more" type="button" (click)="showMoreOffers()">{{ labels().showMoreOffers }}</button>
+            }
           } @else if (hasSearched() && !loading() && !apiError()) {
             <app-state-message kind="empty" [labels]="labels()"></app-state-message>
           }
@@ -84,16 +73,6 @@
         }
       </div>
     </div>
-  </section>
-
-  <section class="trust-grid" [attr.aria-label]="labels().trustGridAriaLabel">
-    @for (card of trustHighlights(); track card.title) {
-      <article>
-        <span class="trust-grid__icon">{{ card.icon }}</span>
-        <h2>{{ card.title }}</h2>
-        <p>{{ card.description }}</p>
-      </article>
-    }
   </section>
 
 </main>

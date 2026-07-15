@@ -47,6 +47,11 @@ public sealed class ProductSearchService(
 
         foreach (var result in results)
         {
+            if (result is null)
+            {
+                continue;
+            }
+
             attemptedSources.Add(result.AttemptedSource);
             if (result.Offer is not null)
             {
@@ -89,7 +94,7 @@ public sealed class ProductSearchService(
             Query: request.Query.Trim(),
             Currency: requestedCurrency,
             FetchedAtUtc: DateTime.UtcNow,
-            CandidateCount: candidates.Count,
+            CandidateCount: attemptedSources.Count,
             AttemptedSourceCount: attemptedSources.Count,
             Offers: orderedOffers,
             AttemptedSources: attemptedSources,
@@ -175,7 +180,7 @@ public sealed class ProductSearchService(
 
     private sealed record RankedOffer(ProductOffer Offer, double ReliabilityScore);
 
-    private async Task<CandidateResult> ProcessCandidateAsync(
+    private async Task<CandidateResult?> ProcessCandidateAsync(
         ProductSearchCandidate candidate,
         string? requestedCurrency,
         SemaphoreSlim semaphore,
@@ -201,6 +206,12 @@ public sealed class ProductSearchService(
             catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
                 return CandidateResult.Failed(candidate, "Candidate fetch timed out.", null);
+            }
+
+            if (!Uri.TryCreate(page.FinalUrl, UriKind.Absolute, out var finalUri) ||
+                ExcludedHostPolicy.From(options.Value.ExcludedHosts).IsExcluded(finalUri))
+            {
+                return null;
             }
 
             var offer = priceExtractor.ExtractOffer(page, candidate, requestedCurrency, out var exclusionReason);
