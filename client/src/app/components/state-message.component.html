@@ -1,8 +1,22 @@
-<section class="state-message" [attr.data-kind]="kind">
+<section class="state-message" [attr.data-kind]="kind" [attr.aria-live]="kind === 'loading' ? 'polite' : null" [attr.role]="kind === 'loading' ? 'status' : null">
   @switch (kind) {
     @case ('loading') {
-      <strong>{{ labels.loadingTitle }}</strong>
-      <p>{{ labels.loadingDescription }}</p>
+      <div class="state-message__loading-copy">
+        <strong>{{ labels.loadingTitle }}</strong>
+        <p>{{ labels.loadingDescription }}</p>
+      </div>
+      <div class="state-message__skeletons" aria-hidden="true">
+        @for (skeleton of [0, 1, 2]; track skeleton) {
+          <div class="state-message__skeleton">
+            <span class="state-message__skeleton-rank"></span>
+            <span class="state-message__skeleton-copy">
+              <i></i>
+              <i></i>
+            </span>
+            <span class="state-message__skeleton-price"></span>
+          </div>
+        }
+      </div>
     }
     @case ('empty') {
       <strong>{{ labels.emptyTitle }}</strong>

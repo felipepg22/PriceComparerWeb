@@ -114,11 +114,6 @@ export class App {
     this.search();
   }
 
-  protected hasQueryError(): boolean {
-    const control = this.form.controls.query;
-    return control.touched && control.invalid;
-  }
-
   private refreshConversionRates(): void {
     const response = this.result();
     if (!response) {

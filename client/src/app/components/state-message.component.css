@@ -9,6 +9,65 @@
   min-width: 0;
 }
 
+.state-message[data-kind='loading'] {
+  gap: var(--wise-space-lg, 1rem);
+}
+
+.state-message__loading-copy {
+  display: grid;
+  gap: var(--wise-space-xs, 0.25rem);
+}
+
+.state-message__skeletons {
+  display: grid;
+  gap: var(--wise-space-sm, 0.5rem);
+}
+
+.state-message__skeleton {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr) 6.5rem;
+  gap: var(--wise-space-md, 0.75rem);
+  align-items: center;
+  padding: var(--wise-space-md, 0.75rem);
+  border: 1px solid var(--wise-border, #d5d9d2);
+  border-radius: var(--wise-radius-control, 12px);
+  background: var(--wise-canvas, #ffffff);
+}
+
+.state-message__skeleton-rank,
+.state-message__skeleton-copy i,
+.state-message__skeleton-price {
+  display: block;
+  border-radius: var(--wise-radius-small, 8px);
+  background: var(--wise-sage, #e8ebe6);
+}
+
+.state-message__skeleton-rank {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+}
+
+.state-message__skeleton-copy {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.state-message__skeleton-copy i:first-child {
+  width: min(18rem, 85%);
+  height: 0.875rem;
+}
+
+.state-message__skeleton-copy i:last-child {
+  width: min(11rem, 58%);
+  height: 0.75rem;
+}
+
+.state-message__skeleton-price {
+  width: 100%;
+  height: 1.125rem;
+}
+
 strong,
 p {
   margin: 0;
@@ -37,4 +96,15 @@ p {
 
 .state-message[data-kind='validation'] strong {
   color: var(--wise-warning-content, #5a4319);
+}
+
+@media (max-width: 520px) {
+  .state-message__skeleton {
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+  }
+
+  .state-message__skeleton-price {
+    grid-column: 2;
+    width: min(6.5rem, 60%);
+  }
 }
