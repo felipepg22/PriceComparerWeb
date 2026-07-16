@@ -8,7 +8,7 @@
 
 .search-panel__controls {
   display: grid;
-  grid-template-columns: minmax(18rem, 1fr) minmax(12.5rem, max-content) max-content;
+  grid-template-columns: minmax(18rem, 1fr) 10.75rem max-content;
   gap: var(--wise-space-lg, 1rem);
   align-items: start;
 }
@@ -20,7 +20,7 @@
 }
 
 .search-panel__field--currency {
-  width: max-content;
+  width: 100%;
   max-width: 100%;
 }
 
@@ -198,7 +198,7 @@ button:focus-visible {
   }
 
   .search-panel__field--currency {
-    width: min(14rem, 100%);
+    width: 10.75rem;
   }
 }
 
@@ -211,6 +211,10 @@ button:focus-visible {
   .search-panel__field--currency {
     grid-column: auto;
     min-width: 0;
+  }
+
+  .search-panel__field--currency {
+    width: 100%;
   }
 
   .search-panel__submit {
