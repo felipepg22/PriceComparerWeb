@@ -1,7 +1,9 @@
 <main class="page">
   <header class="topbar" [attr.aria-label]="labels().mainNavigationAriaLabel">
     <a class="brand" href="/" [attr.aria-label]="labels().brandHomeAriaLabel">
-      <span class="brand__mark">PC</span>
+      <span class="brand__mark" aria-hidden="true">
+        <img src="icon-concepts/dollar-tag-check.png" alt="" width="48" height="48" decoding="async">
+      </span>
       <span>Price Comparer</span>
     </a>
     <div class="topbar__actions">

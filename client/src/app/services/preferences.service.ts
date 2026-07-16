@@ -5,7 +5,6 @@ import {
   CurrencyOption,
   LOCALE_OPTIONS,
   LocaleOption,
-  SUPPORTED_CURRENCIES,
   SUPPORTED_LOCALES,
   SupportedCurrency,
   SupportedLocale,
@@ -13,7 +12,6 @@ import {
 } from '../models/localization';
 
 const STORAGE_LOCALE = 'price-comparer.locale';
-const STORAGE_DISPLAY_CURRENCY = 'price-comparer.displayCurrency';
 
 @Injectable({ providedIn: 'root' })
 export class PreferencesService {
@@ -21,7 +19,6 @@ export class PreferencesService {
   readonly currencyOptions: readonly CurrencyOption[] = CURRENCY_OPTIONS;
 
   readonly activeLocale = signal<SupportedLocale>(this.resolveInitialLocale());
-  readonly displayCurrency = signal<SupportedCurrency>(this.resolveInitialDisplayCurrency());
 
   readonly translations = () => TRANSLATIONS[this.activeLocale()];
 
@@ -37,15 +34,6 @@ export class PreferencesService {
     this.activeLocale.set(locale);
     localStorage.setItem(STORAGE_LOCALE, locale);
     this.applyDocumentMetadata(locale);
-  }
-
-  setDisplayCurrency(currency: SupportedCurrency): void {
-    if (!this.isSupportedCurrency(currency)) {
-      return;
-    }
-
-    this.displayCurrency.set(currency);
-    localStorage.setItem(STORAGE_DISPLAY_CURRENCY, currency);
   }
 
   formatCurrency(amount: number, currency: SupportedCurrency): string {
@@ -73,20 +61,6 @@ export class PreferencesService {
     return translations.confidenceLow;
   }
 
-  formatFreshness(fetchedAtUtc: string | null): string {
-    const translations = this.translations();
-    if (!fetchedAtUtc) {
-      return `${translations.rateFreshness}: -`;
-    }
-
-    const date = new Date(fetchedAtUtc);
-    const formatted = new Intl.DateTimeFormat(this.activeLocale(), {
-      dateStyle: 'short',
-      timeStyle: 'short'
-    }).format(date);
-    return `${translations.rateFreshness}: ${formatted}`;
-  }
-
   private resolveInitialLocale(): SupportedLocale {
     const persisted = localStorage.getItem(STORAGE_LOCALE);
     if (this.isSupportedLocale(persisted)) {
@@ -95,15 +69,6 @@ export class PreferencesService {
 
     const detected = this.detectBrowserLocale();
     return detected ?? 'en-US';
-  }
-
-  private resolveInitialDisplayCurrency(): SupportedCurrency {
-    const persisted = localStorage.getItem(STORAGE_DISPLAY_CURRENCY);
-    if (this.isSupportedCurrency(persisted)) {
-      return persisted;
-    }
-
-    return 'USD';
   }
 
   private detectBrowserLocale(): SupportedLocale | null {
@@ -141,10 +106,6 @@ export class PreferencesService {
 
   private isSupportedLocale(value: string | null): value is SupportedLocale {
     return !!value && (SUPPORTED_LOCALES as readonly string[]).includes(value);
-  }
-
-  private isSupportedCurrency(value: string | null): value is SupportedCurrency {
-    return !!value && (SUPPORTED_CURRENCIES as readonly string[]).includes(value);
   }
 
   private applyDocumentMetadata(locale: SupportedLocale): void {

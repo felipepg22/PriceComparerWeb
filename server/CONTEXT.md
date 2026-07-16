@@ -9,8 +9,12 @@ A product description used to discover potentially matching offers; it may inclu
 _Avoid_: URL, keyword list
 
 **Search Currency**:
-An optional constraint requiring discovered Product Offers to use a specified Supported Currency.
+The required constraint requiring discovered Product Offers to have an Original Price in the user-selected Supported Currency for that Product Search; other currencies are excluded rather than converted.
 _Avoid_: Target currency, display currency
+
+**Supported Currency**:
+One of the currencies recognized for Product Searches: BRL, USD, or EUR.
+_Avoid_: Any currency, locale
 
 **Search Candidate**:
 A discovered page that may contain a Product Offer matching the Product Query.
@@ -61,17 +65,3 @@ _Avoid_: Source, confidence
 **Confidence**:
 The degree of trust that the identified price accurately represents the Product Offer.
 _Avoid_: Rank, relevance
-
-## Currency Conversion
-
-**Supported Currency**:
-One of the currencies recognized for offer comparison and conversion: BRL, USD, or EUR.
-_Avoid_: Any currency, locale
-
-**Conversion Rate**:
-The multiplier relating an Original Price's currency to a requested Display Currency.
-_Avoid_: Price, fee
-
-**Rate Freshness**:
-The age and staleness status of the Conversion Rates used for display.
-_Avoid_: Offer freshness, search freshness

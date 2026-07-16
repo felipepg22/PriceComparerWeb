@@ -218,6 +218,16 @@ public sealed class ProductSearchService(
                 return CandidateResult.Excluded(candidate, exclusionReason ?? "No comparable offer found.", page.StatusCode);
             }
 
+            // Search Currency is a hard boundary: never allow an extractor or a
+            // future implementation to leak an offer published in another currency.
+            if (!string.Equals(offer.Currency, requestedCurrency, StringComparison.OrdinalIgnoreCase))
+            {
+                return CandidateResult.Excluded(
+                    candidate,
+                    $"Currency {offer.Currency} does not match requested currency {requestedCurrency}.",
+                    page.StatusCode);
+            }
+
             return CandidateResult.Success(candidate, offer, page.StatusCode);
         }
         finally
@@ -226,14 +236,9 @@ public sealed class ProductSearchService(
         }
     }
 
-    private static string? NormalizeRequestedCurrency(string? currency)
+    private static string NormalizeRequestedCurrency(string? currency)
     {
-        if (string.IsNullOrWhiteSpace(currency))
-        {
-            return null;
-        }
-
-        return currency.Trim().ToUpperInvariant();
+        return SearchCurrencyPolicy.NormalizeOrThrow(currency);
     }
 
     private sealed record CandidateResult(AttemptedSource AttemptedSource, ProductOffer? Offer)

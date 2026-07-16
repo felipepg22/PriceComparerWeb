@@ -6,7 +6,7 @@ public sealed record ProductSearchRequest(
 
 public sealed record ProductSearchResponse(
     string Query,
-    string? Currency,
+    string Currency,
     DateTime FetchedAtUtc,
     int CandidateCount,
     int AttemptedSourceCount,

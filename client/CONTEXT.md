@@ -1,6 +1,6 @@
 # Price Comparison Experience
 
-The user-facing context for searching for a product and comparing ranked offers across online sellers in a preferred language and currency.
+The user-facing context for searching for a product and comparing ranked offers across online sellers in a preferred language.
 
 ## Search
 
@@ -9,11 +9,11 @@ The product description entered by the user to find comparable offers; it may in
 _Avoid_: Search term, keyword
 
 **Search Currency**:
-An optional currency constraint applied when looking for offers.
+The required Supported Currency submitted with a Product Search to constrain it to offers whose Original Price uses that currency; other currencies are excluded rather than converted. Changing a prospective selection does not alter a completed Product Search.
 _Avoid_: Display currency, preferred currency
 
 **Product Search**:
-One attempt to find offers matching a Product Query and optional Search Currency.
+One attempt to find offers matching a Product Query and its required Search Currency.
 _Avoid_: Scrape, lookup
 
 ## Offers
@@ -38,22 +38,14 @@ _Avoid_: Seller, store
 The Product Offer's price and currency as published by the Seller.
 _Avoid_: Base price, source price
 
-**Display Price**:
-The Original Price presented in the user's Display Currency, when conversion is available.
-_Avoid_: Original price, offer price
-
 **Confidence**:
 The degree of trust that the extracted price accurately represents the Product Offer.
 _Avoid_: Rank, quality score
 
 ## Preferences
 
-**Display Currency**:
-The Supported Currency in which the user prefers to compare prices; it does not alter an offer's Original Price.
-_Avoid_: Search currency, original currency
-
 **Supported Currency**:
-One of the currencies the product recognizes for searching and comparison: BRL, USD, or EUR.
+One of the currencies the product recognizes for Product Searches: BRL, USD, or EUR.
 _Avoid_: Any currency, locale
 
 **Locale**:

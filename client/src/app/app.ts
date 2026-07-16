@@ -5,7 +5,6 @@ import { finalize } from 'rxjs';
 import { OfferCardComponent } from './components/offer-card.component';
 import { SearchPanelComponent } from './components/search-panel.component';
 import { StateMessageComponent } from './components/state-message.component';
-import { ConversionRateResponse } from './models/conversion-rate';
 import { SupportedCurrency, SupportedLocale } from './models/localization';
 import {
   DashboardOffer,
@@ -33,10 +32,6 @@ export class App {
   protected readonly apiError = signal<string | null>(null);
   protected readonly result = signal<ProductSearchResponse | null>(null);
   protected readonly hasSearched = signal(false);
-  protected readonly conversionRates = signal<Map<SupportedCurrency, number>>(new Map());
-  protected readonly conversionFreshness = signal<string | null>(null);
-  protected readonly conversionLoading = signal(false);
-  protected readonly conversionUnavailable = signal(false);
   private static readonly offersPerBatch = 5;
   protected readonly visibleOfferCount = signal(App.offersPerBatch);
   protected readonly labels = computed(() => this.preferences.translations());
@@ -51,19 +46,11 @@ export class App {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(2)]
     }),
-    currency: new FormControl('', { nonNullable: true })
+    currency: new FormControl<SupportedCurrency | ''>('', {
+      nonNullable: true,
+      validators: [Validators.required]
+    })
   });
-
-  constructor() {
-    this.form.controls.currency.valueChanges.subscribe(currency => {
-      if (!this.isSupportedCurrency(currency) || currency === this.preferences.displayCurrency()) {
-        return;
-      }
-
-      this.preferences.setDisplayCurrency(currency);
-      this.refreshConversionRates();
-    });
-  }
 
   protected search(): void {
     if (this.form.invalid || this.loading()) {
@@ -75,16 +62,12 @@ export class App {
     this.visibleOfferCount.set(App.offersPerBatch);
     this.apiError.set(null);
     this.result.set(null);
-    this.conversionRates.set(new Map());
-    this.conversionUnavailable.set(false);
-    this.conversionFreshness.set(null);
-    this.conversionLoading.set(false);
     this.hasSearched.set(true);
 
     const currency = this.form.controls.currency.value;
     const body = {
       query: this.form.controls.query.value.trim(),
-      currency: currency || null
+      currency
     };
 
     this.http.post<ProductSearchResponse>('/api/products/search', body)
@@ -92,7 +75,6 @@ export class App {
       .subscribe({
         next: (response) => {
           this.result.set(response);
-          this.refreshConversionRates();
         },
         error: (error) => {
           const message = error?.error?.error || this.labels().errorDescription;
@@ -115,66 +97,16 @@ export class App {
     this.search();
   }
 
-  private refreshConversionRates(): void {
-    const response = this.result();
-    if (!response) {
-      return;
-    }
-
-    const targetCurrency = this.preferences.displayCurrency();
-    const sourceCurrencies = Array.from(new Set(response.offers.map(offer => offer.currency)))
-      .filter(currency => currency !== targetCurrency);
-
-    if (sourceCurrencies.length === 0) {
-      this.conversionRates.set(new Map());
-      this.conversionUnavailable.set(false);
-      this.conversionFreshness.set(null);
-      this.conversionLoading.set(false);
-      return;
-    }
-
-    this.conversionLoading.set(true);
-    this.http.post<ConversionRateResponse>('/api/conversion-rates', {
-      sourceCurrencies,
-      targetCurrency
-    }).subscribe({
-      next: (conversion) => {
-        const rates = new Map<SupportedCurrency, number>();
-        for (const item of conversion.rates) {
-          if (item.status === 'success' && typeof item.rate === 'number') {
-            rates.set(item.sourceCurrency, item.rate);
-          }
-        }
-
-        this.conversionRates.set(rates);
-        this.conversionFreshness.set(conversion.freshness.fetchedAtUtc);
-        this.conversionUnavailable.set(rates.size === 0);
-        this.conversionLoading.set(false);
-      },
-      error: () => {
-        this.conversionRates.set(new Map());
-        this.conversionUnavailable.set(true);
-        this.conversionLoading.set(false);
-      }
-    });
-  }
-
   private sellerLabel(offer: ProductOffer): string {
     return offer.seller.trim() || offer.sourceName;
   }
 
   private dashboardOffer(offer: ProductOffer): DashboardOffer {
-    const targetCurrency = this.preferences.displayCurrency();
-    const conversionRate = this.conversionRates().get(offer.currency);
-    const hasConversion = offer.currency === targetCurrency || typeof conversionRate === 'number';
-    const displayAmount = offer.currency === targetCurrency ? offer.priceAmount : (conversionRate ? offer.priceAmount * conversionRate : offer.priceAmount);
-    const displayCurrency = offer.currency === targetCurrency ? offer.currency : targetCurrency;
     const labels = this.labels();
 
     return {
       title: offer.title,
-      displayPrice: this.preferences.formatCurrency(displayAmount, displayCurrency),
-      originalPrice: this.preferences.formatCurrency(offer.priceAmount, offer.currency),
+      displayPrice: this.preferences.formatCurrency(offer.priceAmount, offer.currency),
       sellerLabel: this.sellerLabel(offer),
       sourceLabel: labels.offerSourceLabel,
       extractionLabel: labels.offerExtractionLabel,
@@ -182,16 +114,9 @@ export class App {
       extractionMethod: offer.extractionMethod,
       confidencePercent: this.preferences.formatConfidence(offer.confidence),
       confidenceLabel: this.preferences.confidenceLabel(offer.confidence),
-      conversionUnavailable: !hasConversion,
-      conversionUnavailableLabel: labels.conversionUnavailable,
-      freshnessLabel: this.preferences.formatFreshness(this.conversionFreshness()),
       openOfferLabel: labels.openOffer,
-      originalPriceLabel: labels.originalPrice,
       url: offer.url
     };
   }
 
-  private isSupportedCurrency(currency: string): currency is SupportedCurrency {
-    return this.currencyOptions.some(option => option.code === currency);
-  }
 }

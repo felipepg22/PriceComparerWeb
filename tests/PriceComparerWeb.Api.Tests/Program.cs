@@ -12,8 +12,23 @@ await ProductSearchServiceExcludesLowPriceOutliersWithinSameCurrency();
 await SearXngProviderHonorsMaxCandidates();
 await SearXngProviderExcludesConfiguredHostsBeforeCandidateCap();
 await ProductSearchServiceExcludesBlockedRedirectsSilently();
+await ProductSearchServiceRejectsMissingCurrency();
+await ProductSearchServiceRejectsUnsupportedCurrency();
+await ProductSearchServiceExcludesOffersInAnotherCurrency();
+SearchCurrencyEndpointPolicyRejectsMissingAndUnsupportedValues();
 
 Console.WriteLine("Product search configuration regression checks passed.");
+
+static void SearchCurrencyEndpointPolicyRejectsMissingAndUnsupportedValues()
+{
+    AssertFalse(SearchCurrencyPolicy.TryNormalize(null, out _, out var missingError), "API policy should reject missing currency.");
+    AssertEqual("Currency is required. Choose BRL, USD, or EUR.", missingError, "Missing currency error should be actionable.");
+    AssertFalse(SearchCurrencyPolicy.TryNormalize(" ", out _, out _), "API policy should reject blank currency.");
+    AssertFalse(SearchCurrencyPolicy.TryNormalize("GBP", out _, out var unsupportedError), "API policy should reject unsupported currency.");
+    AssertEqual("Currency must be BRL, USD, or EUR.", unsupportedError, "Unsupported currency error should list supported values.");
+    AssertTrue(SearchCurrencyPolicy.TryNormalize(" brl ", out var normalized, out _), "API policy should accept supported currency values.");
+    AssertEqual("BRL", normalized, "API policy should normalize supported currency values.");
+}
 
 static async Task ProductSearchServiceAttemptsAllCandidatesWhenConcurrencyIsLower()
 {
@@ -27,7 +42,7 @@ static async Task ProductSearchServiceAttemptsAllCandidatesWhenConcurrencyIsLowe
         scraper,
         new NoOfferPriceExtractor());
 
-    var response = await service.SearchAsync(new ProductSearchRequest("phone", null), CancellationToken.None);
+    var response = await service.SearchAsync(new ProductSearchRequest("phone", "USD"), CancellationToken.None);
 
     AssertEqual(20, response.CandidateCount, "CandidateCount should reflect all returned candidates.");
     AssertEqual(20, response.AttemptedSourceCount, "MaxConcurrency must not reduce attempted candidates.");
@@ -47,7 +62,7 @@ static async Task ProductSearchServiceClampsInvalidConcurrencyToOne()
         scraper,
         new NoOfferPriceExtractor());
 
-    var response = await service.SearchAsync(new ProductSearchRequest("phone", null), CancellationToken.None);
+    var response = await service.SearchAsync(new ProductSearchRequest("phone", "USD"), CancellationToken.None);
 
     AssertEqual(3, response.AttemptedSourceCount, "Invalid MaxConcurrency should still process every candidate.");
     AssertEqual(1, scraper.MaxObservedConcurrency, "Invalid MaxConcurrency should clamp to one worker.");
@@ -123,7 +138,7 @@ static async Task ProductSearchServiceExcludesLowPriceOutliersWithinSameCurrency
         new TrackingPageScraper(),
         new OfferMapPriceExtractor(offersByUrl));
 
-    var response = await service.SearchAsync(new ProductSearchRequest("phone", null), CancellationToken.None);
+    var response = await service.SearchAsync(new ProductSearchRequest("phone", "USD"), CancellationToken.None);
 
     AssertTrue(
         response.Offers.All(offer => !string.Equals(offer.Url, "https://store.example/usd-low", StringComparison.OrdinalIgnoreCase)),
@@ -132,8 +147,8 @@ static async Task ProductSearchServiceExcludesLowPriceOutliersWithinSameCurrency
         response.Offers.Any(offer => string.Equals(offer.Url, "https://store.example/usd-mid", StringComparison.OrdinalIgnoreCase)),
         "USD offer above/equal cutoff should be retained.");
     AssertTrue(
-        response.Offers.Any(offer => string.Equals(offer.Url, "https://store.example/brl-normal", StringComparison.OrdinalIgnoreCase)),
-        "BRL offers should be evaluated in their own currency group and retained here.");
+        response.Offers.All(offer => string.Equals(offer.Currency, "USD", StringComparison.OrdinalIgnoreCase)),
+        "A USD search must not return offers published in another currency.");
 
     var lowAttempt = response.AttemptedSources.FirstOrDefault(source => string.Equals(source.Url, "https://store.example/usd-low", StringComparison.OrdinalIgnoreCase));
     AssertTrue(lowAttempt is not null, "Low outlier attempted source should be present.");
@@ -168,7 +183,7 @@ static async Task ProductSearchServiceExcludesBlockedRedirectsSilently()
         scraper,
         extractor);
 
-    var response = await service.SearchAsync(new ProductSearchRequest("phone", null), CancellationToken.None);
+    var response = await service.SearchAsync(new ProductSearchRequest("phone", "USD"), CancellationToken.None);
 
     AssertEqual(2, scraper.FetchCount, "Redirect candidates should be fetched before final-host filtering.");
     AssertEqual(1, extractor.Calls, "Blocked final destinations must not reach price extraction.");
@@ -177,6 +192,51 @@ static async Task ProductSearchServiceExcludesBlockedRedirectsSilently()
     AssertEqual(1, response.Offers.Count, "Allowed final destinations should remain offers.");
     AssertTrue(response.AttemptedSources.All(source => !source.Url.Contains("blocked", StringComparison.OrdinalIgnoreCase)), "Blocked redirects must be absent from attempted sources.");
     AssertEqual(0, response.Warnings.Count, "Blocked redirects must be silent.");
+}
+
+static async Task ProductSearchServiceRejectsMissingCurrency()
+{
+    var service = new ProductSearchService(
+        Options.Create(new ProductSearchOptions()),
+        new FixedProductSearchProvider([]),
+        new TrackingPageScraper(),
+        new NoOfferPriceExtractor());
+
+    await AssertThrowsAsync<InvalidOperationException>(
+        () => service.SearchAsync(new ProductSearchRequest("phone", "  "), CancellationToken.None),
+        "Currency is required.");
+}
+
+static async Task ProductSearchServiceRejectsUnsupportedCurrency()
+{
+    var service = new ProductSearchService(
+        Options.Create(new ProductSearchOptions()),
+        new FixedProductSearchProvider([]),
+        new TrackingPageScraper(),
+        new NoOfferPriceExtractor());
+
+    await AssertThrowsAsync<InvalidOperationException>(
+        () => service.SearchAsync(new ProductSearchRequest("phone", "GBP"), CancellationToken.None),
+        "Currency must be BRL, USD, or EUR.");
+}
+
+static async Task ProductSearchServiceExcludesOffersInAnotherCurrency()
+{
+    var candidate = new ProductSearchCandidate("https://store.example/product", "test", "Product");
+    var mismatchedOffer = NewOffer("Product", 100m, "EUR", candidate.Url);
+    var service = new ProductSearchService(
+        Options.Create(new ProductSearchOptions { MaxConcurrency = 1 }),
+        new FixedProductSearchProvider([candidate]),
+        new TrackingPageScraper(),
+        new OfferMapPriceExtractor(new Dictionary<string, ProductOffer> { [candidate.Url] = mismatchedOffer }));
+
+    var response = await service.SearchAsync(new ProductSearchRequest("phone", "USD"), CancellationToken.None);
+
+    AssertEqual(0, response.Offers.Count, "Offers published in another currency must be excluded.");
+    AssertEqual("excluded", response.AttemptedSources[0].Status, "Mismatched currency should be recorded as excluded.");
+    AssertTrue(
+        response.AttemptedSources[0].Reason!.Contains("does not match requested currency USD", StringComparison.Ordinal),
+        "Mismatched currency exclusion should explain the selected currency.");
 }
 
 static void AssertEqual<T>(T expected, T actual, string message)
@@ -193,6 +253,28 @@ static void AssertTrue(bool condition, string message)
     {
         throw new InvalidOperationException(message);
     }
+}
+
+static void AssertFalse(bool condition, string message)
+{
+    AssertTrue(!condition, message);
+}
+
+static async Task AssertThrowsAsync<TException>(Func<Task> action, string expectedMessage)
+    where TException : Exception
+{
+    try
+    {
+        await action();
+    }
+    catch (TException exception)
+    {
+        AssertTrue(exception.Message.Contains(expectedMessage, StringComparison.Ordinal),
+            $"Expected exception message to contain '{expectedMessage}', got '{exception.Message}'.");
+        return;
+    }
+
+    throw new InvalidOperationException($"Expected {typeof(TException).Name} to be thrown.");
 }
 
 static ProductOffer NewOffer(string title, decimal priceAmount, string currency, string url)
