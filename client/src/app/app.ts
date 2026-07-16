@@ -37,11 +37,12 @@ export class App {
   protected readonly conversionFreshness = signal<string | null>(null);
   protected readonly conversionLoading = signal(false);
   protected readonly conversionUnavailable = signal(false);
-  protected readonly showAllOffers = signal(false);
+  private static readonly offersPerBatch = 5;
+  protected readonly visibleOfferCount = signal(App.offersPerBatch);
   protected readonly labels = computed(() => this.preferences.translations());
   protected readonly dashboardOffers = computed(() => this.result()?.offers.map(offer => this.dashboardOffer(offer)) ?? []);
-  protected readonly visibleOffers = computed(() => this.showAllOffers() ? this.dashboardOffers() : this.dashboardOffers().slice(0, 3));
-  protected readonly hasMoreOffers = computed(() => !this.showAllOffers() && this.dashboardOffers().length > 3);
+  protected readonly visibleOffers = computed(() => this.dashboardOffers().slice(0, this.visibleOfferCount()));
+  protected readonly hasMoreOffers = computed(() => this.dashboardOffers().length > this.visibleOfferCount());
   protected readonly localeOptions = this.preferences.localeOptions;
   protected readonly currencyOptions = this.preferences.currencyOptions;
 
@@ -71,7 +72,7 @@ export class App {
     }
 
     this.loading.set(true);
-    this.showAllOffers.set(false);
+    this.visibleOfferCount.set(App.offersPerBatch);
     this.apiError.set(null);
     this.result.set(null);
     this.conversionRates.set(new Map());
@@ -105,7 +106,7 @@ export class App {
   }
 
   protected showMoreOffers(): void {
-    this.showAllOffers.set(true);
+    this.visibleOfferCount.update(count => count + App.offersPerBatch);
   }
 
   protected applySuggestion(suggestion: string): void {

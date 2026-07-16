@@ -457,41 +457,48 @@ describe('App localization and conversion', () => {
     expect(root.textContent).not.toContain('Conversão indisponível');
   });
 
-  it('shows only the first three offers with a count-free Show more offers control', () => {
+  it('shows only the first five offers with a count-free Show more offers control', () => {
     setupStorage('en-US', 'USD');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
 
     submitSearch(fixture, 'phone');
-    http.expectOne('/api/products/search').flush(searchResponse([offer(1), offer(2), offer(3), offer(4), offer(5)]));
+    http.expectOne('/api/products/search').flush(searchResponse([offer(1), offer(2), offer(3), offer(4), offer(5), offer(6), offer(7)]));
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
     const cards = root.querySelectorAll('app-offer-card');
-    expect(cards.length).toBe(3);
+    expect(cards.length).toBe(5);
     expect(cards[0].textContent).toContain('Best overall');
     expect(cards[0].textContent).toContain('Highest-ranked based on reliability, price, and confidence.');
-    expect(root.textContent).not.toContain('Offer 4');
+    expect(root.textContent).not.toContain('Offer 6');
     const showMore = root.querySelector<HTMLButtonElement>('button.show-more');
     expect(showMore?.textContent?.trim()).toBe('Show more offers');
     expect(showMore?.textContent).not.toMatch(/\d/);
   });
 
-  it('reveals every offer after Show more offers is selected', () => {
+  it('reveals up to five more offers after each Show more offers selection', () => {
     setupStorage('en-US', 'USD');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
 
     submitSearch(fixture, 'phone');
-    http.expectOne('/api/products/search').flush(searchResponse([offer(1), offer(2), offer(3), offer(4), offer(5)]));
+    http.expectOne('/api/products/search').flush(searchResponse(Array.from({ length: 12 }, (_, index) => offer(index + 1))));
     fixture.detectChanges();
 
     (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('button.show-more')?.click();
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
-    expect(root.querySelectorAll('app-offer-card').length).toBe(5);
-    expect(root.textContent).toContain('Offer 5');
+    expect(root.querySelectorAll('app-offer-card').length).toBe(10);
+    expect(root.textContent).toContain('Offer 10');
+    expect(root.textContent).not.toContain('Offer 11');
+    expect(root.querySelector('button.show-more')).not.toBeNull();
+
+    root.querySelector<HTMLButtonElement>('button.show-more')?.click();
+    fixture.detectChanges();
+    expect(root.querySelectorAll('app-offer-card').length).toBe(12);
+    expect(root.textContent).toContain('Offer 12');
     expect(root.querySelector('button.show-more')).toBeNull();
   });
 
@@ -501,18 +508,18 @@ describe('App localization and conversion', () => {
     fixture.detectChanges();
 
     submitSearch(fixture, 'phone');
-    http.expectOne('/api/products/search').flush(searchResponse([offer(1), offer(2), offer(3), offer(4)]));
+    http.expectOne('/api/products/search').flush(searchResponse(Array.from({ length: 7 }, (_, index) => offer(index + 1))));
     fixture.detectChanges();
     (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('button.show-more')?.click();
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).querySelectorAll('app-offer-card').length).toBe(4);
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('app-offer-card').length).toBe(7);
 
     submitSearch(fixture, 'tablet');
-    http.expectOne('/api/products/search').flush(searchResponse([offer(5), offer(6), offer(7), offer(8)], 'tablet'));
+    http.expectOne('/api/products/search').flush(searchResponse([offer(5), offer(6), offer(7), offer(8), offer(9), offer(10), offer(11)], 'tablet'));
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
-    expect(root.querySelectorAll('app-offer-card').length).toBe(3);
+    expect(root.querySelectorAll('app-offer-card').length).toBe(5);
     expect(root.querySelector<HTMLButtonElement>('button.show-more')?.textContent?.trim()).toBe('Show more offers');
   });
 
