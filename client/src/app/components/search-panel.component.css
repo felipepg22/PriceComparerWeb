@@ -26,6 +26,14 @@
   line-height: 1.25rem;
 }
 
+.search-panel__error {
+  margin: 0;
+  color: var(--wise-warning-content, #5a4319);
+  font-size: 0.875rem;
+  font-weight: 620;
+  line-height: 1.35;
+}
+
 input,
 button {
   min-width: 0;
@@ -50,6 +58,10 @@ input {
 input:hover {
   border-color: rgba(18, 21, 17, 0.28);
   background: var(--wise-canvas, #ffffff);
+}
+
+input[aria-invalid='true'] {
+  border-color: var(--wise-warning-content, #5a4319);
 }
 
 input {

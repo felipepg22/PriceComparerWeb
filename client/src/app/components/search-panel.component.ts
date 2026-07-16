@@ -19,6 +19,7 @@ export class SearchPanelComponent {
     searchAnyCurrency: string;
     searchButton: string;
     searchingButton: string;
+    validationDescription: string;
     searchIntroTitle: string;
     searchIntroDescription: string;
   };

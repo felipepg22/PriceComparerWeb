@@ -5,20 +5,21 @@
       <span>Price Comparer</span>
     </a>
     <div class="topbar__actions">
-      <label class="language-switcher" for="locale">
-        <span class="visually-hidden">{{ labels().languageLabel }}</span>
-        <span aria-hidden="true">◎</span>
-        <select
-          id="locale"
-          [attr.aria-label]="labels().languageLabel"
-          [value]="preferences.activeLocale()"
-          (change)="onLocaleChange($any($event.target).value)"
-        >
-          @for (locale of localeOptions; track locale.code) {
-            <option [value]="locale.code" [selected]="preferences.activeLocale() === locale.code">{{ locale.label }}</option>
-          }
-        </select>
-      </label>
+      <div class="language-switcher" role="group" [attr.aria-label]="labels().languageLabel">
+        @for (locale of localeOptions; track locale.code) {
+          <button
+            type="button"
+            class="language-switcher__option"
+            [class.language-switcher__option--active]="preferences.activeLocale() === locale.code"
+            [attr.aria-pressed]="preferences.activeLocale() === locale.code"
+            [attr.aria-label]="locale.label"
+            [attr.data-locale]="locale.code"
+            (click)="onLocaleChange(locale.code)"
+          >
+            {{ locale.shortLabel }}
+          </button>
+        }
+      </div>
     </div>
   </header>
 
@@ -32,10 +33,6 @@
 
       @if (loading()) {
         <app-state-message kind="loading" [labels]="labels()"></app-state-message>
-      }
-
-      @if (hasQueryError()) {
-        <app-state-message kind="validation" [labels]="labels()"></app-state-message>
       }
 
       @if (apiError()) {

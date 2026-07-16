@@ -7,8 +7,13 @@
         type="search"
         formControlName="query"
         [placeholder]="labels.searchProductPlaceholder"
+        [attr.aria-describedby]="form.controls['query'].touched && form.controls['query'].invalid ? 'query-error' : null"
+        [attr.aria-invalid]="form.controls['query'].touched && form.controls['query'].invalid"
         autocomplete="off"
       />
+      @if (form.controls['query'].touched && form.controls['query'].invalid) {
+        <p id="query-error" class="search-panel__error" role="alert">{{ labels.validationDescription }}</p>
+      }
     </div>
 
     <div class="search-panel__field search-panel__field--currency">

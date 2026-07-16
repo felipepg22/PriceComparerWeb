@@ -7,6 +7,7 @@ export type SupportedCurrency = typeof SUPPORTED_CURRENCIES[number];
 export interface LocaleOption {
   code: SupportedLocale;
   label: string;
+  shortLabel: string;
   flag: string;
 }
 
@@ -74,9 +75,9 @@ export interface AppTranslations {
 }
 
 export const LOCALE_OPTIONS: readonly LocaleOption[] = [
-  { code: 'en-US', label: 'English (US)', flag: '🇺🇸' },
-  { code: 'pt-BR', label: 'Português (Brasil)', flag: '🇧🇷' },
-  { code: 'es-ES', label: 'Español (España)', flag: '🇪🇸' }
+  { code: 'en-US', label: 'English (US)', shortLabel: 'EN', flag: '🇺🇸' },
+  { code: 'pt-BR', label: 'Português (Brasil)', shortLabel: 'PT', flag: '🇧🇷' },
+  { code: 'es-ES', label: 'Español (España)', shortLabel: 'ES', flag: '🇪🇸' }
 ];
 
 export const CURRENCY_OPTIONS: readonly CurrencyOption[] = [

@@ -30,12 +30,11 @@ function submitSearch(fixture: ReturnType<typeof TestBed.createComponent<App>>, 
 
 function changeLocale(fixture: ReturnType<typeof TestBed.createComponent<App>>, locale: SupportedLocale): void {
   const root = fixture.nativeElement as HTMLElement;
-  const select = root.querySelector<HTMLSelectElement>('select#locale');
-  if (!select) {
-    throw new Error('Expected locale select');
+  const option = root.querySelector<HTMLButtonElement>(`button[data-locale="${locale}"]`);
+  if (!option) {
+    throw new Error(`Expected locale option for ${locale}`);
   }
-  select.value = locale;
-  select.dispatchEvent(new Event('change'));
+  option.click();
   fixture.detectChanges();
 }
 
@@ -111,13 +110,13 @@ describe('App localization and conversion', () => {
     expect(root.textContent).toContain('Encontre a melhor oferta');
     expect(document.documentElement.lang).toBe('pt-BR');
     expect(document.title).toBe('Price Comparer');
-    expect((root.querySelector('select#locale') as HTMLSelectElement).value).toBe('pt-BR');
+    expect(root.querySelector('button[data-locale="pt-BR"]')?.getAttribute('aria-pressed')).toBe('true');
     expect(root.querySelector('select#displayCurrency')).toBeNull();
     expect(root.querySelector('select#currency')).toBeNull();
     expect(root.querySelector('#currency')?.getAttribute('role')).toBe('radiogroup');
 
-    expect(root.querySelector('select#locale')?.getAttribute('aria-label')).toBe('Idioma');
-    expect(root.querySelector('option[value="pt-BR"]')?.textContent).toContain('Português (Brasil)');
+    expect(root.querySelector('.language-switcher')?.getAttribute('aria-label')).toBe('Idioma');
+    expect(root.querySelector('button[data-locale="pt-BR"]')?.getAttribute('aria-label')).toBe('Português (Brasil)');
   });
 
   it('falls back to en-US for invalid persisted locale and maps browser base language', () => {
@@ -175,20 +174,40 @@ describe('App localization and conversion', () => {
     expect(root.textContent).toContain('Buscar ofertas');
     expect(root.querySelector('.trust-grid')).toBeNull();
 
-    expect(root.querySelector('#locale')?.getAttribute('aria-label')).toBe('Idioma');
+    expect(root.querySelector('.language-switcher')?.getAttribute('aria-label')).toBe('Idioma');
     changeLocale(fixture, 'es-ES');
     root = fixture.nativeElement as HTMLElement;
     expect(document.documentElement.lang).toBe('es-ES');
     expect(root.querySelector('.topbar')?.getAttribute('aria-label')).toBe('Navegación principal');
     expect(root.querySelector('.brand')?.getAttribute('aria-label')).toBe('Inicio de Price Comparer');
-    expect(root.querySelector('#locale')?.getAttribute('aria-label')).toBe('Idioma');
-    expect((root.querySelector('select#locale') as HTMLSelectElement).value).toBe('es-ES');
+    expect(root.querySelector('.language-switcher')?.getAttribute('aria-label')).toBe('Idioma');
+    expect(root.querySelector('button[data-locale="es-ES"]')?.getAttribute('aria-pressed')).toBe('true');
     expect(root.querySelector('.suggestion-chips')?.getAttribute('aria-label')).toBe('Sugerencias de búsqueda');
     expect(root.textContent).toContain('Encuentra la mejor oferta');
     expect(root.textContent).toContain('Portátil gaming');
     expect(root.textContent).toContain('Buscar ofertas');
     expect(root.textContent).not.toContain('Panel de comparación de productos');
     expect(root.textContent).not.toContain('Preço claro. Loja confiável.');
+  });
+
+  it('shows field-level validation and result-shaped loading feedback while searching', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    const form = root.querySelector('form') as HTMLFormElement;
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+
+    const queryInput = root.querySelector('#query') as HTMLInputElement;
+    expect(queryInput.getAttribute('aria-invalid')).toBe('true');
+    expect(root.querySelector('#query-error')?.textContent).toContain('Use a product name that is long enough to search.');
+
+    submitSearch(fixture, 'phone');
+    expect(root.querySelector('[data-kind="loading"]')?.getAttribute('role')).toBe('status');
+    expect(root.querySelectorAll('.state-message__skeleton').length).toBe(3);
+
+    http.expectOne('/api/products/search').flush(searchResponse([]));
   });
 
   it('shows converted price and original price without conversion freshness', () => {

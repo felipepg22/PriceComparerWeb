@@ -121,25 +121,39 @@ app-root {
 
 .language-switcher {
   min-height: 3rem;
-  padding: 0 var(--wise-space-md);
+  padding: 0.25rem;
   border: 1px solid var(--wise-border);
   border-radius: var(--wise-radius-control);
   background: var(--wise-sage);
   display: flex;
   align-items: center;
-  gap: var(--wise-space-sm);
+  gap: 0.1875rem;
 }
 
-.language-switcher select {
+.language-switcher__option {
+  min-width: 2.75rem;
   min-height: 2.5rem;
+  padding: 0 var(--wise-space-sm);
   border: 0;
+  border-radius: var(--wise-radius-small);
   background: transparent;
-  color: var(--wise-ink);
+  color: var(--wise-body);
   font-weight: 700;
   cursor: pointer;
 }
 
-.language-switcher select:focus-visible {
+.language-switcher__option:hover {
+  color: var(--wise-ink);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.language-switcher__option--active {
+  color: var(--wise-ink);
+  background: var(--wise-canvas);
+  box-shadow: 0 1px 2px rgba(18, 21, 17, 0.08);
+}
+
+.language-switcher__option:focus-visible {
   outline: none;
   box-shadow: var(--wise-focus);
 }
