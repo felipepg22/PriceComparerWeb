@@ -16,7 +16,7 @@ export class SearchPanelComponent {
     searchProductLabel: string;
     searchProductPlaceholder: string;
     searchCurrencyFilterLabel: string;
-    searchAnyCurrency: string;
+    searchCurrencyRequired: string;
     searchButton: string;
     searchingButton: string;
     validationDescription: string;

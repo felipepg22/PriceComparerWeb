@@ -2,7 +2,7 @@ import { SupportedCurrency } from './localization';
 
 export interface ProductSearchResponse {
   query: string;
-  currency: string | null;
+  currency: SupportedCurrency;
   fetchedAtUtc: string;
   candidateCount: number;
   attemptedSourceCount: number;
@@ -34,7 +34,6 @@ export interface AttemptedSource {
 export interface DashboardOffer {
   title: string;
   displayPrice: string;
-  originalPrice: string;
   sellerLabel: string;
   sourceLabel: string;
   extractionLabel: string;
@@ -42,10 +41,6 @@ export interface DashboardOffer {
   extractionMethod: string;
   confidencePercent: string;
   confidenceLabel: string;
-  conversionUnavailable: boolean;
-  conversionUnavailableLabel: string;
-  freshnessLabel: string;
   openOfferLabel: string;
-  originalPriceLabel: string;
   url: string;
 }

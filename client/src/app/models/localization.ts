@@ -30,7 +30,7 @@ export interface AppTranslations {
   searchProductLabel: string;
   searchProductPlaceholder: string;
   searchCurrencyFilterLabel: string;
-  searchAnyCurrency: string;
+  searchCurrencyRequired: string;
   searchButton: string;
   searchingButton: string;
   languageLabel: string;
@@ -44,15 +44,10 @@ export interface AppTranslations {
   bestOverallExplanation: string;
   showMoreOffers: string;
   resultHelpExtraction: string;
-  resultHelpFreshness: string;
-  conversionLoadingLabel: string;
   offerSourceLabel: string;
   offerExtractionLabel: string;
   openOffer: string;
   sellerUnknownFallback: string;
-  conversionUnavailable: string;
-  originalPrice: string;
-  rateFreshness: string;
   confidenceHigh: string;
   confidenceMedium: string;
   confidenceLow: string;
@@ -101,7 +96,7 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     searchProductLabel: 'Product',
     searchProductPlaceholder: 'iPhone 15 128GB',
     searchCurrencyFilterLabel: 'Currency',
-    searchAnyCurrency: 'Any currency',
+    searchCurrencyRequired: 'Select a currency before searching for offers.',
     searchButton: 'Search offers',
     searchingButton: 'Searching...',
     languageLabel: 'Language',
@@ -115,15 +110,10 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     bestOverallExplanation: 'Highest-ranked based on reliability, price, and confidence.',
     showMoreOffers: 'Show more offers',
     resultHelpExtraction: 'Extraction shows how the price was read from each page.',
-    resultHelpFreshness: 'Rate freshness shows when currency conversion data was last updated.',
-    conversionLoadingLabel: 'Updating conversion rates...',
     offerSourceLabel: 'Source',
     offerExtractionLabel: 'Extraction',
     openOffer: 'Open offer',
     sellerUnknownFallback: 'Unknown seller',
-    conversionUnavailable: 'Conversion unavailable',
-    originalPrice: 'Original',
-    rateFreshness: 'Rate updated',
     confidenceHigh: 'High',
     confidenceMedium: 'Medium',
     confidenceLow: 'Low',
@@ -175,7 +165,7 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     searchProductLabel: 'Produto',
     searchProductPlaceholder: 'iPhone 15 128GB',
     searchCurrencyFilterLabel: 'Moeda',
-    searchAnyCurrency: 'Qualquer moeda',
+    searchCurrencyRequired: 'Selecione uma moeda antes de buscar ofertas.',
     searchButton: 'Buscar ofertas',
     searchingButton: 'Buscando...',
     languageLabel: 'Idioma',
@@ -189,15 +179,10 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     bestOverallExplanation: 'Melhor classificação com base em confiabilidade, preço e confiança.',
     showMoreOffers: 'Mostrar mais ofertas',
     resultHelpExtraction: 'Extração mostra como o preço foi lido em cada página.',
-    resultHelpFreshness: 'Atualização da cotação mostra quando os dados de conversão foram atualizados.',
-    conversionLoadingLabel: 'Atualizando cotações...',
     offerSourceLabel: 'Fonte',
     offerExtractionLabel: 'Extração',
     openOffer: 'Abrir oferta',
     sellerUnknownFallback: 'Vendedor não informado',
-    conversionUnavailable: 'Conversão indisponível',
-    originalPrice: 'Original',
-    rateFreshness: 'Cotação atualizada',
     confidenceHigh: 'Alta',
     confidenceMedium: 'Média',
     confidenceLow: 'Baixa',
@@ -249,7 +234,7 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     searchProductLabel: 'Producto',
     searchProductPlaceholder: 'iPhone 15 128GB',
     searchCurrencyFilterLabel: 'Moneda',
-    searchAnyCurrency: 'Cualquier moneda',
+    searchCurrencyRequired: 'Selecciona una moneda antes de buscar ofertas.',
     searchButton: 'Buscar ofertas',
     searchingButton: 'Buscando...',
     languageLabel: 'Idioma',
@@ -263,15 +248,10 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     bestOverallExplanation: 'La mejor clasificación según fiabilidad, precio y confianza.',
     showMoreOffers: 'Mostrar más ofertas',
     resultHelpExtraction: 'Extracción indica cómo se leyó el precio en cada página.',
-    resultHelpFreshness: 'Actualización del tipo de cambio indica cuándo se actualizaron los datos de conversión.',
-    conversionLoadingLabel: 'Actualizando tipos de cambio...',
     offerSourceLabel: 'Fuente',
     offerExtractionLabel: 'Extracción',
     openOffer: 'Abrir oferta',
     sellerUnknownFallback: 'Vendedor no informado',
-    conversionUnavailable: 'Conversión no disponible',
-    originalPrice: 'Original',
-    rateFreshness: 'Tipo de cambio actualizado',
     confidenceHigh: 'Alta',
     confidenceMedium: 'Media',
     confidenceLow: 'Baja',

@@ -24,22 +24,34 @@ public sealed partial class PriceExtractor : IPriceExtractor
             "Untitled product";
 
         var seller = SellerFromUrl(page.FinalUrl);
-        var structured = ExtractStructuredOffer(page.Document);
+        var structured = ExtractStructuredOffer(page.Document, requestedCurrency);
         if (structured is not null)
         {
-            return BuildOffer(structured.Value, title, seller, page, candidate, requestedCurrency, "structured-data", 0.95, out exclusionReason);
+            var offer = BuildOffer(structured.Value, title, seller, page, candidate, requestedCurrency, "structured-data", 0.95, out exclusionReason);
+            if (offer is not null)
+            {
+                return offer;
+            }
         }
 
         var meta = ExtractMetaOffer(page.Document);
         if (meta is not null)
         {
-            return BuildOffer(meta.Value, title, seller, page, candidate, requestedCurrency, "metadata", 0.85, out exclusionReason);
+            var offer = BuildOffer(meta.Value, title, seller, page, candidate, requestedCurrency, "metadata", 0.85, out exclusionReason);
+            if (offer is not null)
+            {
+                return offer;
+            }
         }
 
         var fallback = ExtractVisibleTextOffer(page.Document.Body?.TextContent);
         if (fallback is not null)
         {
-            return BuildOffer(fallback.Value, title, seller, page, candidate, requestedCurrency, "visible-text", 0.6, out exclusionReason);
+            var offer = BuildOffer(fallback.Value, title, seller, page, candidate, requestedCurrency, "visible-text", 0.6, out exclusionReason);
+            if (offer is not null)
+            {
+                return offer;
+            }
         }
 
         exclusionReason = "No extractable price found.";
@@ -84,7 +96,7 @@ public sealed partial class PriceExtractor : IPriceExtractor
             FetchedAtUtc: page.FetchedAtUtc);
     }
 
-    private static PriceCandidate? ExtractStructuredOffer(IDocument document)
+    private static PriceCandidate? ExtractStructuredOffer(IDocument document, string? requestedCurrency)
     {
         foreach (var script in document.QuerySelectorAll("script[type='application/ld+json']"))
         {
@@ -97,7 +109,7 @@ public sealed partial class PriceExtractor : IPriceExtractor
             try
             {
                 var node = JsonNode.Parse(json);
-                var offer = FindOffer(node);
+                var offer = FindOffer(node, requestedCurrency);
                 if (offer is not null)
                 {
                     return offer;
@@ -111,7 +123,7 @@ public sealed partial class PriceExtractor : IPriceExtractor
         return null;
     }
 
-    private static PriceCandidate? FindOffer(JsonNode? node)
+    private static PriceCandidate? FindOffer(JsonNode? node, string? requestedCurrency)
     {
         if (node is null)
         {
@@ -122,7 +134,7 @@ public sealed partial class PriceExtractor : IPriceExtractor
         {
             foreach (var item in array)
             {
-                var offer = FindOffer(item);
+                var offer = FindOffer(item, requestedCurrency);
                 if (offer is not null)
                 {
                     return offer;
@@ -137,7 +149,9 @@ public sealed partial class PriceExtractor : IPriceExtractor
 
         var priceNode = obj["price"] ?? obj["lowPrice"] ?? obj["highPrice"];
         var currencyNode = obj["priceCurrency"];
-        if (TryReadAmount(priceNode?.ToString(), out var amount))
+        if (TryReadAmount(priceNode?.ToString(), out var amount) &&
+            (string.IsNullOrWhiteSpace(requestedCurrency) ||
+             string.Equals(NormalizeCurrency(currencyNode?.ToString()), requestedCurrency, StringComparison.OrdinalIgnoreCase)))
         {
             return new PriceCandidate(amount, currencyNode?.ToString());
         }
@@ -145,7 +159,7 @@ public sealed partial class PriceExtractor : IPriceExtractor
         var offers = obj["offers"];
         if (offers is not null)
         {
-            var offer = FindOffer(offers);
+            var offer = FindOffer(offers, requestedCurrency);
             if (offer is not null)
             {
                 return offer;
@@ -154,7 +168,7 @@ public sealed partial class PriceExtractor : IPriceExtractor
 
         foreach (var property in obj)
         {
-            var offer = FindOffer(property.Value);
+            var offer = FindOffer(property.Value, requestedCurrency);
             if (offer is not null)
             {
                 return offer;

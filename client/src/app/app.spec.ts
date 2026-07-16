@@ -6,17 +6,14 @@ import type { SupportedCurrency, SupportedLocale } from './models/localization';
 
 type SearchCurrency = SupportedCurrency | '';
 
-function setupStorage(locale?: string, currency?: string): void {
+function setupStorage(locale?: string): void {
   localStorage.clear();
   if (locale) {
     localStorage.setItem('price-comparer.locale', locale);
   }
-  if (currency) {
-    localStorage.setItem('price-comparer.displayCurrency', currency);
-  }
 }
 
-function submitSearch(fixture: ReturnType<typeof TestBed.createComponent<App>>, query: string, sourceCurrency: SearchCurrency = ''): void {
+function submitSearch(fixture: ReturnType<typeof TestBed.createComponent<App>>, query: string, sourceCurrency: SearchCurrency = 'USD'): void {
   const root = fixture.nativeElement as HTMLElement;
   const queryInput = root.querySelector('#query') as HTMLInputElement;
   const form = root.querySelector('form') as HTMLFormElement;
@@ -55,7 +52,7 @@ function offer(index: number, currency: SupportedCurrency = 'USD') {
 function searchResponse(offers: ReturnType<typeof offer>[], query = 'phone') {
   return {
     query,
-    currency: null,
+    currency: 'USD',
     fetchedAtUtc: '2026-05-11T12:00:00Z',
     candidateCount: 1200,
     attemptedSourceCount: 900,
@@ -73,14 +70,14 @@ function changeSearchCurrency(fixture: ReturnType<typeof TestBed.createComponent
   const root = fixture.nativeElement as HTMLElement;
   const input = root.querySelector<HTMLInputElement>(`input[name="currency"][data-currency="${currency}"]`);
   if (!input) {
-    throw new Error(`Expected currency input for ${currency || 'any currency'}`);
+    throw new Error(`Expected currency input for ${currency}`);
   }
 
   input.click();
   fixture.detectChanges();
 }
 
-describe('App localization and conversion', () => {
+describe('App localization and single-currency search', () => {
   let http: HttpTestingController;
   const originalNavigatorLanguage = navigator.language;
   const originalNavigatorLanguages = navigator.languages;
@@ -101,8 +98,8 @@ describe('App localization and conversion', () => {
     Object.defineProperty(navigator, 'languages', { value: originalNavigatorLanguages, configurable: true });
   });
 
-  it('restores a valid persisted locale and display currency', () => {
-    setupStorage('pt-BR', 'EUR');
+  it('renders the required single-currency search controls', () => {
+    setupStorage('pt-BR');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
@@ -111,16 +108,20 @@ describe('App localization and conversion', () => {
     expect(document.documentElement.lang).toBe('pt-BR');
     expect(document.title).toBe('Price Comparer');
     expect(root.querySelector('button[data-locale="pt-BR"]')?.getAttribute('aria-pressed')).toBe('true');
-    expect(root.querySelector('select#displayCurrency')).toBeNull();
     expect(root.querySelector('select#currency')).toBeNull();
     expect(root.querySelector('#currency')?.getAttribute('role')).toBe('radiogroup');
+    expect(root.querySelectorAll('input[name="currency"]')).toHaveLength(3);
+    expect(root.querySelector<HTMLInputElement>('input[name="currency"]:checked')).toBeNull();
+    expect(root.querySelector('#currency')?.getAttribute('aria-describedby')).toBe('currency-error');
+    expect(root.querySelector('#currency-error')?.textContent).toContain('Selecione uma moeda antes de buscar ofertas.');
+    expect(root.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
 
     expect(root.querySelector('.language-switcher')?.getAttribute('aria-label')).toBe('Idioma');
     expect(root.querySelector('button[data-locale="pt-BR"]')?.getAttribute('aria-label')).toBe('Português (Brasil)');
   });
 
   it('falls back to en-US for invalid persisted locale and maps browser base language', () => {
-    setupStorage('fr-FR', 'USD');
+    setupStorage('fr-FR');
     Object.defineProperty(navigator, 'languages', { value: ['es-MX'], configurable: true });
     Object.defineProperty(navigator, 'language', { value: 'es-MX', configurable: true });
 
@@ -131,7 +132,7 @@ describe('App localization and conversion', () => {
   });
 
   it('uses exact supported browser locale', () => {
-    setupStorage(undefined, 'USD');
+    setupStorage();
     Object.defineProperty(navigator, 'languages', { value: ['pt-BR'], configurable: true });
     Object.defineProperty(navigator, 'language', { value: 'pt-BR', configurable: true });
     const fixture = TestBed.createComponent(App);
@@ -140,7 +141,7 @@ describe('App localization and conversion', () => {
   });
 
   it('falls back to en-US when browser locale is unsupported', () => {
-    setupStorage(undefined, 'USD');
+    setupStorage();
     Object.defineProperty(navigator, 'languages', { value: ['fr-FR'], configurable: true });
     Object.defineProperty(navigator, 'language', { value: 'fr-FR', configurable: true });
     const fixture = TestBed.createComponent(App);
@@ -162,7 +163,7 @@ describe('App localization and conversion', () => {
   });
 
   it('renders localized ui copy in pt-BR and es-ES', () => {
-    setupStorage('pt-BR', 'USD');
+    setupStorage('pt-BR');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     let root = fixture.nativeElement as HTMLElement;
@@ -210,22 +211,22 @@ describe('App localization and conversion', () => {
     http.expectOne('/api/products/search').flush(searchResponse([]));
   });
 
-  it('shows converted price and original price without conversion freshness', () => {
-    setupStorage('en-US', 'USD');
+  it('renders the published offer price without conversion', () => {
+    setupStorage('en-US');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
 
     submitSearch(fixture, 'camera');
     http.expectOne('/api/products/search').flush({
       query: 'camera',
-      currency: null,
+      currency: 'USD',
       fetchedAtUtc: '2026-05-11T12:00:00Z',
       candidateCount: 1,
       attemptedSourceCount: 1,
       offers: [{
         title: 'Camera X',
         priceAmount: 1000,
-        currency: 'BRL',
+        currency: 'USD',
         seller: 'Loja A',
         url: 'https://example.com/camera',
         sourceName: 'Example',
@@ -237,27 +238,21 @@ describe('App localization and conversion', () => {
       warnings: []
     });
 
-    http.expectOne('/api/conversion-rates').flush({
-      targetCurrency: 'USD',
-      rates: [{ sourceCurrency: 'BRL', targetCurrency: 'USD', rate: 0.2, status: 'success' }],
-      freshness: { fetchedAtUtc: '2026-05-11T12:00:00Z', stale: false, maxAgeMinutes: 60 }
-    });
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
-    expect(root.textContent).toContain('$200.00');
-    expect(root.textContent).toContain('Original: R$1,000.00');
+    expect(root.textContent).toContain('$1,000.00');
     expect(root.textContent).not.toContain('Rate updated');
   });
 
   it('preserves active form and results when language changes without product-search request', () => {
-    setupStorage('en-US', 'USD');
+    setupStorage('en-US');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     submitSearch(fixture, 'headphones');
     http.expectOne('/api/products/search').flush({
       query: 'headphones',
-      currency: null,
+      currency: 'USD',
       fetchedAtUtc: '2026-05-11T12:00:00Z',
       candidateCount: 1,
       attemptedSourceCount: 1,
@@ -287,7 +282,7 @@ describe('App localization and conversion', () => {
   });
 
   it('product currency change preserves source filter and offer order without product search', () => {
-    setupStorage('en-US', 'USD');
+    setupStorage('en-US');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     submitSearch(fixture, 'keyboard', 'EUR');
@@ -321,24 +316,10 @@ describe('App localization and conversion', () => {
       attemptedSources: [],
       warnings: []
     });
-    http.expectOne('/api/conversion-rates').flush({
-      targetCurrency: 'USD',
-      rates: [
-        { sourceCurrency: 'BRL', targetCurrency: 'USD', rate: 0.2, status: 'success' }
-      ],
-      freshness: { fetchedAtUtc: '2026-05-11T12:00:00Z', stale: false, maxAgeMinutes: 60 }
-    });
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
     changeProductCurrency(fixture, 'BRL');
-    http.expectOne('/api/conversion-rates').flush({
-      targetCurrency: 'BRL',
-      rates: [
-        { sourceCurrency: 'USD', targetCurrency: 'BRL', rate: 5, status: 'success' }
-      ],
-      freshness: { fetchedAtUtc: '2026-05-11T12:00:00Z', stale: false, maxAgeMinutes: 60 }
-    });
     fixture.detectChanges();
 
     http.expectNone('/api/products/search');
@@ -349,13 +330,13 @@ describe('App localization and conversion', () => {
   });
 
   it('does not render operational metrics, confidence, source, extraction, or freshness', () => {
-    setupStorage('en-US', 'USD');
+    setupStorage('en-US');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     submitSearch(fixture, 'phone');
     http.expectOne('/api/products/search').flush({
       query: 'phone',
-      currency: null,
+      currency: 'USD',
       fetchedAtUtc: '2026-05-11T12:00:00Z',
       candidateCount: 1200,
       attemptedSourceCount: 900,
@@ -383,13 +364,13 @@ describe('App localization and conversion', () => {
   });
 
   it('keeps external/backend content exactly as received', () => {
-    setupStorage('es-ES', 'USD');
+    setupStorage('es-ES');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     submitSearch(fixture, 'monitor');
     http.expectOne('/api/products/search').flush({
       query: 'monitor',
-      currency: null,
+      currency: 'USD',
       fetchedAtUtc: '2026-05-11T12:00:00Z',
       candidateCount: 2,
       attemptedSourceCount: 2,
@@ -423,22 +404,22 @@ describe('App localization and conversion', () => {
     expect(root.textContent).not.toContain('RAW BACKEND SOURCE');
   });
 
-  it('keeps offers and shows localized conversion-unavailable fallback when conversion fails', () => {
-    setupStorage('pt-BR', 'USD');
+  it('keeps selected-currency offers without conversion fallback behavior', () => {
+    setupStorage('pt-BR');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
 
     submitSearch(fixture, 'tablet');
     http.expectOne('/api/products/search').flush({
       query: 'tablet',
-      currency: null,
+      currency: 'USD',
       fetchedAtUtc: '2026-05-11T12:00:00Z',
       candidateCount: 1,
       attemptedSourceCount: 1,
       offers: [{
         title: 'Tablet Z',
         priceAmount: 400,
-        currency: 'EUR',
+        currency: 'USD',
         seller: 'Store B',
         url: 'https://example.com/tablet',
         sourceName: 'Example',
@@ -449,7 +430,6 @@ describe('App localization and conversion', () => {
       attemptedSources: [],
       warnings: []
     });
-    http.expectOne('/api/conversion-rates').flush({ error: 'offline' }, { status: 503, statusText: 'Service Unavailable' });
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
@@ -458,7 +438,7 @@ describe('App localization and conversion', () => {
   });
 
   it('shows only the first five offers with a count-free Show more offers control', () => {
-    setupStorage('en-US', 'USD');
+    setupStorage('en-US');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
 
@@ -478,7 +458,7 @@ describe('App localization and conversion', () => {
   });
 
   it('reveals up to five more offers after each Show more offers selection', () => {
-    setupStorage('en-US', 'USD');
+    setupStorage('en-US');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
 
@@ -503,7 +483,7 @@ describe('App localization and conversion', () => {
   });
 
   it('resets expanded offers when a new search begins', () => {
-    setupStorage('en-US', 'USD');
+    setupStorage('en-US');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
 
@@ -523,22 +503,17 @@ describe('App localization and conversion', () => {
     expect(root.querySelector<HTMLButtonElement>('button.show-more')?.textContent?.trim()).toBe('Show more offers');
   });
 
-  it('only shows original price when a currency conversion changes the displayed price', () => {
-    setupStorage('en-US', 'USD');
+  it('renders only the selected-currency published price', () => {
+    setupStorage('en-US');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
 
     submitSearch(fixture, 'camera');
-    http.expectOne('/api/products/search').flush(searchResponse([offer(1, 'USD'), offer(2, 'BRL')], 'camera'));
-    http.expectOne('/api/conversion-rates').flush({
-      targetCurrency: 'USD',
-      rates: [{ sourceCurrency: 'BRL', targetCurrency: 'USD', rate: 0.2, status: 'success' }],
-      freshness: { fetchedAtUtc: '2026-05-11T12:00:00Z', stale: false, maxAgeMinutes: 60 }
-    });
+    http.expectOne('/api/products/search').flush(searchResponse([offer(1, 'USD'), offer(2, 'USD')], 'camera'));
     fixture.detectChanges();
 
     const cards = (fixture.nativeElement as HTMLElement).querySelectorAll('app-offer-card');
     expect(cards[0].textContent).not.toContain('Original:');
-    expect(cards[1].textContent).toContain('Original: R$200.00');
+    expect(cards[1].textContent).toContain('$200.00');
   });
 });

@@ -14,9 +14,6 @@
 
   <div class="offer-card__side">
     <p class="offer-card__price">{{ offer.displayPrice }}</p>
-    @if (!offer.conversionUnavailable && offer.originalPrice !== offer.displayPrice) {
-      <p class="offer-card__original">{{ offer.originalPriceLabel }}: {{ offer.originalPrice }}</p>
-    }
     <a [href]="offer.url" target="_blank" rel="noopener">{{ offer.openOfferLabel }}</a>
   </div>
 </article>

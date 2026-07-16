@@ -18,11 +18,7 @@
 
     <div class="search-panel__field search-panel__field--currency">
       <span id="currency-label" class="search-panel__label">{{ labels.searchCurrencyFilterLabel }}</span>
-      <div id="currency" class="currency-picker" role="radiogroup" aria-labelledby="currency-label">
-        <label class="currency-picker__option currency-picker__option--any">
-          <input class="currency-picker__input" type="radio" name="currency" formControlName="currency" value="" data-currency="" />
-          <span class="currency-picker__content">{{ labels.searchAnyCurrency }}</span>
-        </label>
+      <div id="currency" class="currency-picker" role="radiogroup" aria-labelledby="currency-label" [attr.aria-describedby]="form.controls['currency'].invalid ? 'currency-error' : null">
         @for (currency of currencyOptions; track currency.code) {
           <label class="currency-picker__option">
             <input class="currency-picker__input" type="radio" name="currency" formControlName="currency" [value]="currency.code" [attr.data-currency]="currency.code" />
@@ -30,9 +26,12 @@
           </label>
         }
       </div>
+      @if (form.controls['currency'].invalid) {
+        <p id="currency-error" class="search-panel__error" role="alert">{{ labels.searchCurrencyRequired }}</p>
+      }
     </div>
 
-    <button class="search-panel__submit" type="submit" [disabled]="loading">
+    <button class="search-panel__submit" type="submit" [disabled]="loading || form.invalid">
       {{ loading ? labels.searchingButton : labels.searchButton }}
     </button>
   </div>
