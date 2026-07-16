@@ -15,7 +15,6 @@ public sealed class ProductSearchService(
     IPageScraper pageScraper,
     IPriceExtractor priceExtractor) : IProductSearchService
 {
-    private const int MaxRankedOffers = 10;
     private const decimal LowPriceOutlierThreshold = 0.5m;
     private const int MinOffersPerCurrencyForOutlierFilter = 2;
 
@@ -81,7 +80,6 @@ public sealed class ProductSearchService(
             .ThenBy(ranked => ranked.Offer.Title, StringComparer.OrdinalIgnoreCase)
             .ThenBy(ranked => ranked.Offer.Url, StringComparer.OrdinalIgnoreCase)
             .Select(ranked => ranked.Offer)
-            .Take(MaxRankedOffers)
             .ToArray();
 
         var warnings = attemptedSources
