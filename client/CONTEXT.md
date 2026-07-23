@@ -22,9 +22,17 @@ _Avoid_: Scrape, lookup
 A seller's purchasable product listing with a title, price, currency, seller, and destination URL.
 _Avoid_: Product, search result, deal
 
+**Canonical Product**:
+The distinct product model identified across seller listings by reliable attributes such as a model, SKU, or GTIN.
+_Avoid_: Product offer, listing, search result
+
 **Ranked Offer**:
 A Product Offer positioned relative to other offers by comparability, reliability, and price.
 _Avoid_: Cheapest product, best product
+
+**Price History**:
+The time-ordered record of prices for one Product Offer in one Search Currency.
+_Avoid_: Product price history, price trend
 
 **Seller**:
 The merchant offering the product for purchase.
@@ -41,6 +49,14 @@ _Avoid_: Base price, source price
 **Confidence**:
 The degree of trust that the extracted price accurately represents the Product Offer.
 _Avoid_: Rank, quality score
+
+**Recipient Email**:
+An email address entered by the user as the destination for an individual Product Offer; it must pass basic syntactic validation but is not verified for ownership or deliverability.
+_Avoid_: User account email, verified email
+
+**Offer Email**:
+An app-branded email containing one Product Offer's title, Original Price, Seller, and destination URL, sent to a Recipient Email.
+_Avoid_: Search digest, marketing email
 
 ## Preferences
 

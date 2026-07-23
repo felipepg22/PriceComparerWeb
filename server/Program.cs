@@ -1,17 +1,26 @@
+using System.Net.Mail;
+using System.Net.Sockets;
+using System.Security.Authentication;
+using System.IO;
+using PriceComparerWeb.Api.Configuration;
 using PriceComparerWeb.Api.Models;
 using PriceComparerWeb.Api.Options;
 using PriceComparerWeb.Api.Services;
 using Microsoft.Extensions.Options;
+
+DotEnvLoader.LoadFromAncestors(Directory.GetCurrentDirectory(), AppContext.BaseDirectory);
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.Configure<ProductSearchOptions>(
     builder.Configuration.GetSection(ProductSearchOptions.SectionName));
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.SectionName));
 builder.Services.AddSingleton<IPageScraper, PageScraper>();
 builder.Services.AddSingleton<IProductSearchProvider, SearXngProductSearchProvider>();
 builder.Services.AddSingleton<IPriceExtractor, PriceExtractor>();
 builder.Services.AddSingleton<IProductSearchService, ProductSearchService>();
+builder.Services.AddSingleton<IOfferEmailSender, SmtpOfferEmailSender>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("client", policy =>
@@ -92,6 +101,36 @@ app.MapPost("/api/products/search", async (
     }
 })
 .WithName("SearchProducts");
+
+app.MapPost("/api/offers/email", async (
+    OfferEmailRequest request,
+    IOfferEmailSender sender,
+    CancellationToken cancellationToken) =>
+{
+    if (!OfferEmailValidation.TryValidate(request, out var validationError))
+    {
+        return Results.BadRequest(new { error = validationError });
+    }
+
+    try
+    {
+        await sender.SendAsync(OfferEmailTemplate.Create(request), cancellationToken);
+        return Results.Ok(new { message = "Offer email sent successfully." });
+    }
+    catch (InvalidOperationException)
+    {
+        return Results.Json(
+            new { error = "SMTP email delivery is not configured. Set the Smtp__Host, Smtp__Username, Smtp__Password, and Smtp__FromAddress settings before sending." },
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+    catch (Exception exception) when (exception is SmtpException or AuthenticationException or SocketException or IOException)
+    {
+        return Results.Json(
+            new { error = "The SMTP server could not accept the email. Check the SMTP host, port, TLS, and credentials." },
+            statusCode: StatusCodes.Status502BadGateway);
+    }
+})
+.WithName("EmailOffer");
 
 app.Run();
 

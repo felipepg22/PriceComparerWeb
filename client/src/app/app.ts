@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, HostListener, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { OfferCardComponent } from './components/offer-card.component';
@@ -40,6 +40,13 @@ export class App {
   protected readonly hasMoreOffers = computed(() => this.dashboardOffers().length > this.visibleOfferCount());
   protected readonly localeOptions = this.preferences.localeOptions;
   protected readonly currencyOptions = this.preferences.currencyOptions;
+  protected readonly emailOffer = signal<DashboardOffer | null>(null);
+  protected readonly emailPending = signal(false);
+  protected readonly emailStatus = signal<'idle' | 'success' | 'failure'>('idle');
+  protected readonly emailForm = new FormGroup({
+    recipientEmail: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] })
+  });
+  private emailReturnFocus: HTMLElement | null = null;
 
   protected readonly form = new FormGroup({
     query: new FormControl('', {
@@ -97,6 +104,49 @@ export class App {
     this.search();
   }
 
+  protected openEmailDialog(offer: DashboardOffer): void {
+    this.emailReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    this.emailOffer.set(offer);
+    this.emailStatus.set('idle');
+    this.emailForm.reset();
+    queueMicrotask(() => document.getElementById('recipient-email')?.focus());
+  }
+
+  protected closeEmailDialog(): void {
+    if (!this.emailPending()) {
+      this.emailOffer.set(null);
+      const returnFocus = this.emailReturnFocus;
+      this.emailReturnFocus = null;
+      queueMicrotask(() => returnFocus?.focus());
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  protected dismissEmailDialogWithEscape(): void {
+    if (this.emailOffer()) {
+      this.closeEmailDialog();
+    }
+  }
+
+  protected sendOfferEmail(): void {
+    if (this.emailForm.invalid || !this.emailOffer() || this.emailPending()) {
+      this.emailForm.markAllAsTouched();
+      return;
+    }
+
+    const offer = this.emailOffer()!;
+    this.emailPending.set(true);
+    this.emailStatus.set('idle');
+    this.http.post('/api/offers/email', {
+      recipientEmail: this.emailForm.controls.recipientEmail.value.trim(),
+      locale: this.preferences.activeLocale(),
+      offer: { title: offer.title, priceAmount: offer.priceAmount, currency: offer.currency, seller: offer.seller, url: offer.url }
+    }).pipe(finalize(() => this.emailPending.set(false))).subscribe({
+      next: () => this.emailStatus.set('success'),
+      error: () => this.emailStatus.set('failure')
+    });
+  }
+
   private sellerLabel(offer: ProductOffer): string {
     return offer.seller.trim() || offer.sourceName;
   }
@@ -115,7 +165,10 @@ export class App {
       confidencePercent: this.preferences.formatConfidence(offer.confidence),
       confidenceLabel: this.preferences.confidenceLabel(offer.confidence),
       openOfferLabel: labels.openOffer,
-      url: offer.url
+      url: offer.url,
+      priceAmount: offer.priceAmount,
+      currency: offer.currency,
+      seller: offer.seller
     };
   }
 

@@ -52,6 +52,8 @@
                   [rank]="index + 1"
                   [bestOverallLabel]="labels().bestOverall"
                   [bestOverallExplanation]="labels().bestOverallExplanation"
+                  [emailOfferLabel]="labels().emailOffer"
+                  (emailRequested)="openEmailDialog($event)"
                 ></app-offer-card>
               }
             </section>
@@ -73,5 +75,30 @@
       </div>
     </div>
   </section>
+
+  @if (emailOffer(); as offer) {
+    <div class="email-dialog-backdrop" role="presentation" (click)="closeEmailDialog()">
+      <section class="email-dialog" role="dialog" aria-modal="true" [attr.aria-labelledby]="'email-dialog-title'" (click)="$event.stopPropagation()">
+        <div class="email-dialog__header">
+          <h2 id="email-dialog-title">{{ labels().emailDialogTitle }}</h2>
+          <button type="button" class="email-dialog__close" [attr.aria-label]="labels().emailCancel" (click)="closeEmailDialog()">×</button>
+        </div>
+        <p class="email-dialog__offer">{{ offer.title }} · {{ offer.displayPrice }}</p>
+        <form [formGroup]="emailForm" (ngSubmit)="sendOfferEmail()" novalidate>
+          <label for="recipient-email">{{ labels().emailRecipientLabel }}</label>
+          <input id="recipient-email" type="email" formControlName="recipientEmail" [placeholder]="labels().emailRecipientPlaceholder" autocomplete="email" [attr.aria-invalid]="emailForm.controls.recipientEmail.invalid && emailForm.controls.recipientEmail.touched" aria-describedby="recipient-email-error">
+          @if (emailForm.controls.recipientEmail.touched && emailForm.controls.recipientEmail.errors) {
+            <p id="recipient-email-error" class="email-dialog__error">{{ emailForm.controls.recipientEmail.hasError('required') ? labels().emailRequired : labels().emailInvalid }}</p>
+          }
+          @if (emailStatus() === 'success') { <p class="email-dialog__success" role="status">{{ labels().emailSuccess }}</p> }
+          @if (emailStatus() === 'failure') { <p class="email-dialog__error" role="alert">{{ labels().emailFailure }}</p> }
+          <div class="email-dialog__actions">
+            <button type="button" class="email-dialog__cancel" (click)="closeEmailDialog()" [disabled]="emailPending()">{{ labels().emailCancel }}</button>
+            <button type="submit" class="email-dialog__submit" [disabled]="emailPending() || emailForm.invalid">{{ emailPending() ? labels().emailSending : labels().emailSend }}</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  }
 
 </main>

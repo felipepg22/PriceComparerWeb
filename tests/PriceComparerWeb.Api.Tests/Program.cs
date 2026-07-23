@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using AngleSharp.Html.Parser;
+using PriceComparerWeb.Api.Configuration;
 using Microsoft.Extensions.Options;
 using PriceComparerWeb.Api.Models;
 using PriceComparerWeb.Api.Options;
@@ -16,8 +17,98 @@ await ProductSearchServiceRejectsMissingCurrency();
 await ProductSearchServiceRejectsUnsupportedCurrency();
 await ProductSearchServiceExcludesOffersInAnotherCurrency();
 SearchCurrencyEndpointPolicyRejectsMissingAndUnsupportedValues();
+OfferEmailValidationRejectsInvalidRecipient();
+OfferEmailValidationRejectsInvalidOffer();
+OfferEmailTemplateContainsOfferFieldsAndEscapesMarkup();
+DotEnvLoaderLoadsValuesWithoutOverridingEnvironment();
+DotEnvLoaderFindsEnvironmentFileInParentDirectory();
+await OfferEmailDeliveryUsesFakeSender();
 
 Console.WriteLine("Product search configuration regression checks passed.");
+
+static void OfferEmailValidationRejectsInvalidRecipient()
+{
+    var request = new OfferEmailRequest("not-an-email", new OfferEmailOffer("Phone", 10m, "USD", "Store", "https://store.example/phone"), "en");
+    AssertFalse(OfferEmailValidation.TryValidate(request, out var error), "Invalid recipient should be rejected.");
+    AssertEqual("Recipient email must be a valid email address.", error, "Recipient validation error should be actionable.");
+}
+
+static void OfferEmailValidationRejectsInvalidOffer()
+{
+    var request = new OfferEmailRequest("person@example.com", new OfferEmailOffer("", -1m, "GBP", "", "javascript:alert(1)"), "en-US");
+    AssertFalse(OfferEmailValidation.TryValidate(request, out _), "Invalid offer data should be rejected before delivery.");
+}
+
+static void OfferEmailTemplateContainsOfferFieldsAndEscapesMarkup()
+{
+    var request = new OfferEmailRequest("person@example.com", new OfferEmailOffer("Phone <Pro>", 99.9m, "usd", "Store & Co", "https://store.example/phone"), "en");
+    AssertTrue(OfferEmailValidation.TryValidate(request, out _), "Valid offer email should pass validation.");
+    var message = OfferEmailTemplate.Create(request);
+    AssertTrue(message.HtmlBody.Contains("Phone &lt;Pro&gt;", StringComparison.Ordinal), "Template should HTML-escape the title.");
+    AssertTrue(message.HtmlBody.Contains("Store &amp; Co", StringComparison.Ordinal), "Template should HTML-escape the seller.");
+    AssertTrue(message.HtmlBody.Contains("99.9 USD", StringComparison.Ordinal), "Template should include normalized currency and price.");
+    AssertTrue(message.PlainTextBody.Contains("https://store.example/phone", StringComparison.Ordinal), "Plain-text template should include the offer link.");
+}
+
+static void DotEnvLoaderLoadsValuesWithoutOverridingEnvironment()
+{
+    var loadedKey = $"TEST_DOTENV_{Guid.NewGuid():N}";
+    var existingKey = $"TEST_DOTENV_{Guid.NewGuid():N}";
+    var path = Path.GetTempFileName();
+
+    try
+    {
+        Environment.SetEnvironmentVariable(existingKey, "existing");
+        File.WriteAllText(path, $"{loadedKey}=loaded\nexport {existingKey}=from-file\n# ignored\n");
+
+        DotEnvLoader.Load(path);
+
+        AssertEqual("loaded", Environment.GetEnvironmentVariable(loadedKey), ".env values should be loaded.");
+        AssertEqual("existing", Environment.GetEnvironmentVariable(existingKey), "Process environment should take precedence over .env.");
+    }
+    finally
+    {
+        Environment.SetEnvironmentVariable(loadedKey, null);
+        Environment.SetEnvironmentVariable(existingKey, null);
+        File.Delete(path);
+    }
+}
+
+static void DotEnvLoaderFindsEnvironmentFileInParentDirectory()
+{
+    var key = $"TEST_DOTENV_{Guid.NewGuid():N}";
+    var root = Path.Combine(Path.GetTempPath(), $"price-comparer-dotenv-{Guid.NewGuid():N}");
+    var child = Path.Combine(root, "server");
+
+    try
+    {
+        Directory.CreateDirectory(child);
+        File.WriteAllText(Path.Combine(root, ".env"), $"{key}=loaded-from-parent\n");
+
+        DotEnvLoader.LoadFromAncestors(child);
+
+        AssertEqual("loaded-from-parent", Environment.GetEnvironmentVariable(key), "The API should find a repository-root .env when its working directory is server/.");
+    }
+    finally
+    {
+        Environment.SetEnvironmentVariable(key, null);
+        Directory.Delete(root, recursive: true);
+    }
+}
+
+static async Task OfferEmailDeliveryUsesFakeSender()
+{
+    var sender = new FakeOfferEmailSender();
+    var request = new OfferEmailRequest("person@example.com", new OfferEmailOffer("Phone", 99.9m, "USD", "Store", "https://store.example/phone"), "en-US");
+    await sender.SendAsync(OfferEmailTemplate.Create(request), CancellationToken.None);
+    AssertEqual(1, sender.Messages.Count, "A valid request should invoke the configured sender exactly once.");
+    AssertTrue(sender.Messages[0].HtmlBody.Contains("Offer found", StringComparison.Ordinal), "Email labels should use the requested locale.");
+
+    sender.ThrowOnSend = true;
+    await AssertThrowsAsync<InvalidOperationException>(
+        () => sender.SendAsync(OfferEmailTemplate.Create(request), CancellationToken.None),
+        "fake SMTP failure");
+}
 
 static void SearchCurrencyEndpointPolicyRejectsMissingAndUnsupportedValues()
 {
@@ -425,5 +516,22 @@ sealed class SearXngExcludedHostsResponseHandler : HttpMessageHandler
         };
 
         return Task.FromResult(response);
+    }
+}
+
+sealed class FakeOfferEmailSender : IOfferEmailSender
+{
+    public List<OfferEmailMessage> Messages { get; } = [];
+    public bool ThrowOnSend { get; set; }
+
+    public Task SendAsync(OfferEmailMessage message, CancellationToken cancellationToken)
+    {
+        if (ThrowOnSend)
+        {
+            throw new InvalidOperationException("fake SMTP failure");
+        }
+
+        Messages.Add(message);
+        return Task.CompletedTask;
     }
 }

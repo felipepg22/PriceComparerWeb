@@ -47,6 +47,17 @@ export interface AppTranslations {
   offerSourceLabel: string;
   offerExtractionLabel: string;
   openOffer: string;
+  emailOffer: string;
+  emailDialogTitle: string;
+  emailRecipientLabel: string;
+  emailRecipientPlaceholder: string;
+  emailRequired: string;
+  emailInvalid: string;
+  emailCancel: string;
+  emailSend: string;
+  emailSending: string;
+  emailSuccess: string;
+  emailFailure: string;
   sellerUnknownFallback: string;
   confidenceHigh: string;
   confidenceMedium: string;
@@ -113,6 +124,7 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     offerSourceLabel: 'Source',
     offerExtractionLabel: 'Extraction',
     openOffer: 'Open offer',
+    emailOffer: 'Email offer', emailDialogTitle: 'Email this offer', emailRecipientLabel: 'Recipient email', emailRecipientPlaceholder: 'name@example.com', emailRequired: 'Enter an email address.', emailInvalid: 'Enter a valid email address.', emailCancel: 'Cancel', emailSend: 'Send offer', emailSending: 'Sending...', emailSuccess: 'Offer sent successfully.', emailFailure: 'We could not send this offer. Please try again.',
     sellerUnknownFallback: 'Unknown seller',
     confidenceHigh: 'High',
     confidenceMedium: 'Medium',
@@ -182,6 +194,7 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     offerSourceLabel: 'Fonte',
     offerExtractionLabel: 'Extração',
     openOffer: 'Abrir oferta',
+    emailOffer: 'Enviar oferta', emailDialogTitle: 'Enviar esta oferta', emailRecipientLabel: 'E-mail do destinatário', emailRecipientPlaceholder: 'nome@exemplo.com', emailRequired: 'Digite um endereço de e-mail.', emailInvalid: 'Digite um endereço de e-mail válido.', emailCancel: 'Cancelar', emailSend: 'Enviar oferta', emailSending: 'Enviando...', emailSuccess: 'Oferta enviada com sucesso.', emailFailure: 'Não foi possível enviar esta oferta. Tente novamente.',
     sellerUnknownFallback: 'Vendedor não informado',
     confidenceHigh: 'Alta',
     confidenceMedium: 'Média',
@@ -251,6 +264,7 @@ export const TRANSLATIONS: Record<SupportedLocale, AppTranslations> = {
     offerSourceLabel: 'Fuente',
     offerExtractionLabel: 'Extracción',
     openOffer: 'Abrir oferta',
+    emailOffer: 'Enviar oferta', emailDialogTitle: 'Enviar esta oferta', emailRecipientLabel: 'Correo del destinatario', emailRecipientPlaceholder: 'nombre@ejemplo.com', emailRequired: 'Introduce una dirección de correo.', emailInvalid: 'Introduce una dirección de correo válida.', emailCancel: 'Cancelar', emailSend: 'Enviar oferta', emailSending: 'Enviando...', emailSuccess: 'Oferta enviada correctamente.', emailFailure: 'No pudimos enviar esta oferta. Inténtalo de nuevo.',
     sellerUnknownFallback: 'Vendedor no informado',
     confidenceHigh: 'Alta',
     confidenceMedium: 'Media',

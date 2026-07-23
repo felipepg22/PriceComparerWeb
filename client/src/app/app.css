@@ -1,3 +1,43 @@
 :host {
   display: block;
 }
+
+.email-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(18 21 17 / 0.48);
+}
+
+.email-dialog {
+  width: min(100%, 30rem);
+  max-width: 30rem;
+  padding: 1.5rem;
+  border-radius: var(--wise-radius-card, 24px);
+  background: var(--wise-canvas, #fff);
+  color: var(--wise-ink, #121511);
+  box-shadow: 0 1rem 3rem rgb(18 21 17 / 0.2);
+}
+
+.email-dialog__header,
+.email-dialog__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.email-dialog h2 { margin: 0; }
+.email-dialog__offer { color: var(--wise-muted, #687368); }
+.email-dialog label { display: block; margin: 1rem 0 0.4rem; font-weight: 700; }
+.email-dialog input { width: 100%; min-height: 2.75rem; padding: 0.65rem 0.8rem; border: 1px solid var(--wise-muted, #aab3a8); border-radius: 0.75rem; font: inherit; box-sizing: border-box; }
+.email-dialog__close { border: 0; background: transparent; font-size: 1.5rem; cursor: pointer; }
+.email-dialog__actions { justify-content: flex-end; margin-top: 1.25rem; }
+.email-dialog__actions button { min-height: 2.75rem; padding: 0.6rem 1rem; border-radius: 999px; font: inherit; font-weight: 700; cursor: pointer; }
+.email-dialog__cancel { border: 1px solid var(--wise-muted, #aab3a8); background: transparent; }
+.email-dialog__submit { border: 1px solid var(--wise-primary, #9fe870); background: var(--wise-primary, #9fe870); }
+.email-dialog__error { color: #a62d2d; font-size: 0.85rem; }
+.email-dialog__success { color: #28733d; font-size: 0.85rem; }
