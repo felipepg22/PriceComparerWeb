@@ -14,6 +14,9 @@
 
   <div class="offer-card__side">
     <p class="offer-card__price">{{ offer.displayPrice }}</p>
-    <a [href]="offer.url" target="_blank" rel="noopener">{{ offer.openOfferLabel }}</a>
+    <div class="offer-card__actions">
+      <a [href]="offer.url" target="_blank" rel="noopener">{{ offer.openOfferLabel }}</a>
+      <button type="button" class="offer-card__email" (click)="emailRequested.emit(offer)">{{ emailOfferLabel }}</button>
+    </div>
   </div>
 </article>

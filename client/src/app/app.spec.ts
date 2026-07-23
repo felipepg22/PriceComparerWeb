@@ -516,4 +516,53 @@ describe('App localization and single-currency search', () => {
     expect(cards[0].textContent).not.toContain('Original:');
     expect(cards[1].textContent).toContain('$200.00');
   });
+
+  it('opens the offer email dialog and sends the selected offer', () => {
+    setupStorage('en-US');
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    submitSearch(fixture, 'phone');
+    http.expectOne('/api/products/search').flush(searchResponse([offer(1)]));
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.offer-card__email')?.click();
+    fixture.detectChanges();
+    expect(root.querySelector('[role="dialog"]')).not.toBeNull();
+
+    const recipient = root.querySelector<HTMLInputElement>('#recipient-email')!;
+    recipient.value = 'buyer@example.com';
+    recipient.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    root.querySelector<HTMLFormElement>('.email-dialog form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+
+    const request = http.expectOne('/api/offers/email');
+    expect(request.request.body).toEqual({
+      recipientEmail: 'buyer@example.com',
+      locale: 'en-US',
+      offer: { title: 'Offer 1', priceAmount: 100, currency: 'USD', seller: 'Seller 1', url: 'https://example.com/1' }
+    });
+    request.flush({});
+    fixture.detectChanges();
+    expect(root.textContent).toContain('Offer sent successfully.');
+  });
+
+  it('validates recipient email before making a request', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    submitSearch(fixture, 'phone');
+    http.expectOne('/api/products/search').flush(searchResponse([offer(1)]));
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.offer-card__email')?.click();
+    fixture.detectChanges();
+    const recipient = root.querySelector<HTMLInputElement>('#recipient-email')!;
+    recipient.value = 'not-an-email';
+    recipient.dispatchEvent(new Event('input', { bubbles: true }));
+    root.querySelector<HTMLFormElement>('.email-dialog form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+    expect(root.querySelector('#recipient-email-error')?.textContent).toContain('Enter a valid email address.');
+    http.expectNone('/api/offers/email');
+  });
 });

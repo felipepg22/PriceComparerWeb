@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { DashboardOffer } from '../models/product-search';
 
 @Component({
@@ -12,4 +12,6 @@ export class OfferCardComponent {
   @Input({ required: true }) rank!: number;
   @Input() bestOverallLabel = '';
   @Input() bestOverallExplanation = '';
+  @Input() emailOfferLabel = '';
+  @Output() emailRequested = new EventEmitter<DashboardOffer>();
 }

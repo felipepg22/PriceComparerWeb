@@ -43,4 +43,7 @@ export interface DashboardOffer {
   confidenceLabel: string;
   openOfferLabel: string;
   url: string;
+  priceAmount: number;
+  currency: SupportedCurrency;
+  seller: string;
 }

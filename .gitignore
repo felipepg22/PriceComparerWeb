@@ -8,6 +8,11 @@
 /bin
 /obj
 
+# Local server secrets
+/server/appsettings.Development.json
+/.env
+/server/.env
+
 # Node
 /node_modules
 npm-debug.log
@@ -44,4 +49,3 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
-
