@@ -1,0 +1,18 @@
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"C","location":"client/src/app/app.ts:53","message":"Main page component constructed","data":{"path":"/","locale":"pt-BR"},"timestamp":1785194114443}
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"B","location":"client/src/app/shell.component.ts:8","message":"Shell constructed","data":{"path":"/"},"timestamp":1785194114439}
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"A","location":"client/src/main.ts:5","message":"Angular bootstrap starting","data":{"path":"/"},"timestamp":1785194114438}
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"D","location":"client/src/app/services/auth.service.ts:15","message":"Session refresh requested","data":{"path":"/"},"timestamp":1785194114439}
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"A","location":"client/src/main.ts:10","message":"Angular bootstrap completed","data":{"path":"/"},"timestamp":1785194114441}
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"D","location":"client/src/app/services/auth.service.ts:26","message":"Session refresh completed","data":{"hasSession":false},"timestamp":1785194114466}
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"A","location":"client/src/main.ts:5","message":"Angular bootstrap starting","data":{"path":"/account/login"},"timestamp":1785194129039}
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"B","location":"client/src/app/shell.component.ts:8","message":"Shell constructed","data":{"path":"/account/login"},"timestamp":1785194129040}
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"D","location":"client/src/app/services/auth.service.ts:15","message":"Session refresh requested","data":{"path":"/account/login"},"timestamp":1785194129040}
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"A","location":"client/src/main.ts:10","message":"Angular bootstrap completed","data":{"path":"/account/login"},"timestamp":1785194129041}
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"D","location":"client/src/app/services/auth.service.ts:26","message":"Session refresh completed","data":{"hasSession":false},"timestamp":1785194129056}
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"C","location":"client/src/app/app.ts:53","message":"Main page component constructed","data":{"path":"/","locale":"en-US"},"timestamp":1785194131334}
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"A","location":"client/src/main.ts:5","message":"Angular bootstrap starting","data":{"path":"/account/register"},"timestamp":1785194133125}
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"B","location":"client/src/app/shell.component.ts:8","message":"Shell constructed","data":{"path":"/account/register"},"timestamp":1785194133127}
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"D","location":"client/src/app/services/auth.service.ts:15","message":"Session refresh requested","data":{"path":"/account/register"},"timestamp":1785194133127}
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"A","location":"client/src/main.ts:10","message":"Angular bootstrap completed","data":{"path":"/account/register"},"timestamp":1785194133128}
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"D","location":"client/src/app/services/auth.service.ts:26","message":"Session refresh completed","data":{"hasSession":false},"timestamp":1785194133134}
+{"sessionId":"027632","runId":"pre-fix","hypothesisId":"C","location":"client/src/app/app.ts:53","message":"Main page component constructed","data":{"path":"/","locale":"en-US"},"timestamp":1785194134791}
