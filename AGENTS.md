@@ -1,50 +1,30 @@
-# Repository Guidelines
+# Repository instructions
 
-## Project Structure & Module Organization
+## Scope
 
-PriceComparerWeb is split into two main apps. `server/` contains the ASP.NET Core Web API targeting .NET 10, with request/response records in `server/Models/`, configuration types in `server/Options/`, and scraping/search logic in `server/Services/`. `client/` contains the Angular 21 standalone app; main UI files live in `client/src/app/`, global styles in `client/src/styles.css`, and static assets in `client/public/`. OpenSpec change artifacts live under `openspec/changes/`.
+PriceComparerWeb contains an Angular 21 client, an ASP.NET Core API targeting .NET 10, a backend regression-test harness, and OpenSpec artifacts. Keep changes within the affected app and preserve unrelated worktree changes.
 
-## Build, Test, and Development Commands
+## Essential workflow
 
-- `dotnet build server/PriceComparerWeb.Api.csproj`: build the backend.
-- `dotnet run --project server/PriceComparerWeb.Api.csproj`: run the API locally.
-- `cd client && npm install`: install frontend dependencies.
-- `cd client && npm start`: run Angular dev server at `http://localhost:4200`.
-- `cd client && npm run build`: create a production frontend build.
-- `cd client && npm run test -- --watch=false`: run frontend tests once.
+- Build the API with `dotnet build server/PriceComparerWeb.Api.csproj`.
+- Run backend regression checks with `dotnet run --project tests/PriceComparerWeb.Api.Tests/PriceComparerWeb.Api.Tests.csproj`.
+- From `client/`, build with `npm run build` and run tests once with `npm run test -- --watch=false`.
+- Run the API locally with `dotnet run --project server/PriceComparerWeb.Api.csproj`; product search requires SearXNG JSON output at `http://localhost:8080` unless configuration overrides it.
 
-Product search expects SearXNG at `http://localhost:8080` with JSON output enabled.
+## Critical constraints
 
-## Coding Style & Naming Conventions
+- Do not commit credentials, private endpoints, or populated `.env` files. Do not bypass paywalls, authentication, anti-bot controls, or site terms when scraping.
+- Use 4-space indentation for C# and 2-space indentation for TypeScript, HTML, and CSS. Use nullable reference types, PascalCase types and methods, and camelCase C# locals.
+- Keep API request/response models in `server/Models/`, configuration types in `server/Options/`, and focused business logic in `server/Services/`.
+- Use Conventional Commits in English. Pull requests must include a summary, verification performed, the related issue/change, UI screenshots when applicable, and required local services.
 
-Use 4-space indentation for C# and 2-space indentation for TypeScript, HTML, and CSS. C# uses nullable reference types, records for DTOs, PascalCase types/methods, and camelCase locals. Angular components use standalone imports, signal-based state, and descriptive interface names. Keep API models in `Models`, runtime settings in `Options`, and business logic in focused services.
+## Task routes
 
-## Testing Guidelines
+- For frontend changes, read `client/AGENTS.md`; it covers Angular commands, standalone and signal-based conventions, tests, and UI-design routing.
+- Before changing domain terminology, business rules, or invariants, read `CONTEXT-MAP.md` and the relevant `client/CONTEXT.md` or `server/CONTEXT.md`. Follow `docs/agents/domain.md` for domain-documentation and ADR routing.
+- For GitHub Issues, PRDs, or triage work, follow `docs/agents/issue-tracker.md` and `docs/agents/triage-labels.md`.
+- For OpenSpec work, use artifacts under `openspec/changes/`. Before considering implementation complete, call `openspec-implementation-auditor` as a subagent to verify tasks are implemented correctly, completely, and traceably.
 
-Frontend tests use Vitest through Angular CLI. Test files follow `*.spec.ts` and should cover validation, API calls, rendered state, and error/partial-failure states. Backend currently has no test project; verify backend changes with `dotnet build` and manual API checks until a test project is added.
+## Completion checks
 
-## Commit & Pull Request Guidelines
-
-Use Conventional Commits in English, matching existing history: `feat: add product search with SearXNG`, `docs(readme): update project paths`, `feat(scraper): scaffold Angular app and .NET scraping API`. Pull requests should include a short summary, verification commands run, linked issue/change when applicable, and screenshots for UI changes. Mention any required local services, especially SearXNG.
-
-## Security & Configuration Tips
-
-Do not commit credentials or private endpoints. Keep local overrides in development settings or environment variables. Do not bypass paywalls, authentication, anti-bot controls, or site terms when scraping.
-
-## OpenSpec Verification Policy
-
-Before considering OpenSpec work complete, always call `openspec-implementation-auditor` as a subagent to verify all OpenSpec tasks were implemented correctly, completely, and traceably.
-
-## Agent skills
-
-### Issue tracker
-
-Issues and PRDs are tracked in GitHub Issues; external pull requests are not a triage surface. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Triage uses the default canonical labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-This repository uses a multi-context layout with separate frontend and backend contexts. See `docs/agents/domain.md`.
+Run the focused checks that cover the changed area. For backend behavior, run the regression-test harness in addition to building the API; for frontend behavior, run the Angular build and relevant tests.
