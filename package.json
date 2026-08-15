@@ -1,0 +1,9 @@
+{
+  "name": "price-comparer-web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix client run build && dotnet build server/PriceComparerWeb.Api.csproj",
+    "test": "npm --prefix client run test -- --watch=false && dotnet run --project tests/PriceComparerWeb.Api.Tests/PriceComparerWeb.Api.Tests.csproj"
+  }
+}
