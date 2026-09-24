@@ -31,5 +31,8 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci --prefix client
 
+      - name: Run static checks
+        run: npm run typecheck
+
       - name: Run test suites
         run: npm test
